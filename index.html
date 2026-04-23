@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Homework Tracker • flow</title>
+  <title>Homework • flow</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,49 +15,73 @@
     <!-- header -->
     <header class="header">
       <div class="header-top">
-        <h1 class="logo">
-          <span class="logo-icon"><i class="fas fa-graduation-cap"></i></span>
-          homework<span class="logo-dot">.</span>flow
-        </h1>
+        <div class="logo-group">
+          <div class="logo-mark">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div>
+            <h1 class="logo">Homework</h1>
+            <p class="logo-subtitle">Stay on top of it.</p>
+          </div>
+        </div>
         <div class="header-actions">
-          <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <div class="date-display" id="currentDate"></div>
+          <button class="theme-btn" id="themeToggle" aria-label="Toggle theme">
             <i class="fas fa-moon"></i>
           </button>
-          <div class="date-badge" id="currentDate"></div>
         </div>
       </div>
+      
+      <!-- progress ring -->
       <div class="progress-section">
-        <div class="progress-text">
-          <span id="progressLabel">Weekly progress</span>
-          <span class="progress-numbers"><span id="completedCount">0</span>/<span id="totalCount">0</span> done</span>
+        <div class="progress-ring-container">
+          <svg class="progress-ring" viewBox="0 0 100 100">
+            <circle class="progress-ring-bg" cx="50" cy="50" r="42"></circle>
+            <circle class="progress-ring-fill" id="progressRing" cx="50" cy="50" r="42"></circle>
+          </svg>
+          <div class="progress-ring-text">
+            <span class="progress-percent" id="progressPercent">0%</span>
+            <span class="progress-label">complete</span>
+          </div>
         </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
-        </div>
-      </div>
-      <!-- streak & motivation -->
-      <div class="stats-row" id="statsRow">
-        <div class="stat-badge">
-          <i class="fas fa-fire"></i>
-          <span id="streakCount">0</span> day streak
-        </div>
-        <div class="stat-badge" id="motivationBadge">
-          <i class="fas fa-star"></i>
-          <span id="motivationText">Let's get started!</span>
+        <div class="progress-details">
+          <div class="progress-stat">
+            <span class="stat-number" id="completedCount">0</span>
+            <span class="stat-label">Completed</span>
+          </div>
+          <div class="progress-divider"></div>
+          <div class="progress-stat">
+            <span class="stat-number" id="totalCount">0</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="progress-divider"></div>
+          <div class="progress-stat">
+            <span class="stat-number" id="streakCount">0</span>
+            <span class="stat-label">Day Streak</span>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- add assignment form -->
+    <!-- quick add -->
     <section class="add-section">
       <form id="assignmentForm" autocomplete="off">
-        <div class="input-row">
-          <div class="field subject-field">
-            <label for="subjectInput"><i class="fas fa-book-open"></i> Subject</label>
-            <input type="text" id="subjectInput" placeholder="e.g. Math" required>
+        <div class="form-row-top">
+          <div class="field field-title">
+            <input type="text" id="titleInput" placeholder="Assignment title..." required>
           </div>
-          <div class="field priority-field">
-            <label for="prioritySelect"><i class="fas fa-flag"></i> Priority</label>
+          <button type="submit" class="btn-add-circle" aria-label="Add assignment">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+        <div class="form-row-bottom">
+          <div class="field">
+            <input type="text" id="subjectInput" placeholder="Subject" required>
+          </div>
+          <div class="field">
+            <input type="date" id="dueDateInput" required>
+          </div>
+          <div class="field">
             <select id="prioritySelect">
               <option value="normal">Normal</option>
               <option value="urgent">Urgent</option>
@@ -65,53 +89,40 @@
             </select>
           </div>
         </div>
-        <div class="field title-field">
-          <label for="titleInput"><i class="fas fa-pencil-alt"></i> Assignment</label>
-          <input type="text" id="titleInput" placeholder="e.g. Problem Set 5" required>
-        </div>
-        <div class="field date-field">
-          <label for="dueDateInput"><i class="fas fa-calendar-alt"></i> Due date</label>
-          <input type="date" id="dueDateInput" required>
-        </div>
-        <button type="submit" class="btn-add">
-          <i class="fas fa-plus-circle"></i> Add assignment
-        </button>
       </form>
     </section>
 
-    <!-- filter tabs + search -->
-    <div class="controls-row">
-      <div class="filters">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="today">Today</button>
-        <button class="filter-btn" data-filter="upcoming">Upcoming</button>
-        <button class="filter-btn" data-filter="overdue">Overdue</button>
+    <!-- filters & search -->
+    <div class="controls-section">
+      <div class="filter-scroll">
+        <button class="filter-chip active" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="today">Today</button>
+        <button class="filter-chip" data-filter="upcoming">Upcoming</button>
+        <button class="filter-chip" data-filter="overdue">Overdue</button>
       </div>
-      <div class="search-wrapper">
-        <i class="fas fa-search search-icon"></i>
-        <input type="text" id="searchInput" placeholder="Search..." class="search-input">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search...">
       </div>
     </div>
 
     <!-- assignments list -->
     <section class="assignments-list" id="assignmentsList">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon"><i class="far fa-clipboard"></i></div>
-        <p>No assignments yet</p>
-        <p class="sub">Add one to get started ✨</p>
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="far fa-check-circle"></i>
+        </div>
+        <p class="empty-title">All clear</p>
+        <p class="empty-sub">Add an assignment to get started</p>
       </div>
     </section>
 
-    <!-- clear completed button -->
-    <div class="actions-footer">
-      <button class="btn-clear" id="clearCompletedBtn">
-        <i class="fas fa-check-double"></i> Clear completed
+    <!-- footer action -->
+    <div class="footer-action">
+      <button class="btn-text" id="clearCompletedBtn">
+        Clear completed
       </button>
     </div>
-
-    <footer class="footer">
-      <p>tap to complete • made for focus</p>
-    </footer>
   </div>
 
   <script src="app.js"></script>
