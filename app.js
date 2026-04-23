@@ -335,8 +335,22 @@
     if (currentFilter === 'dashboard') { renderDashboard(); return; }
 
     if (filtered.length === 0) {
-      assignmentsList.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="far fa-check-circle"></i></div><p class="empty-title">${searchQuery?'No results':'All clear'}</p><p class="empty-sub">${searchQuery?'Try another search':'Add an assignment to get started'}</p></div>`;
-      updateStats(); return;
+      assignmentsList.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">
+          <svg width="70" height="70" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="14" y="10" width="52" height="60" rx="6" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <line x1="28" y1="10" x2="28" y2="70" stroke="currentColor" stroke-width="2.5"/>
+            <line x1="18" y1="28" x2="24" y2="28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18" y1="36" x2="24" y2="36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="34" y1="28" x2="50" y2="28" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <line x1="34" y1="36" x2="56" y2="36" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+            <line x1="34" y1="44" x2="46" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+            <line x1="34" y1="52" x2="42" y2="52" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+          </svg>
+        </div>
+        <p class="empty-title">${searchQuery ? 'No results' : 'All clear'}</p>
+        <p class="empty-sub">${searchQuery ? 'Try another search' : 'Add an assignment to get started'}</p>
+      </div>`;      updateStats(); return;
     }
 
     filtered.forEach(a => {
