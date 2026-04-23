@@ -293,60 +293,76 @@ const FPS_TIPS = [
 
 const STRAPS = [
   {
-    name: "Frost Trap", icon: "🧊", color: "#06b6d4", rgb: "6,182,212",
-    what: "Slows enemies who walk over it. Strong on bridges and bed entry points.",
-    placement: ["Place at the base of your bed bridge — enemies hitting it get slowed before reaching your bed", "Put one at each tunnel entry before a break attempt", "Layer with TNT trap for a slow + burst combo"],
-    counters: "Jump over it, walk around edges, or use knockback to avoid triggering.",
-    tips: ["Most players don't look down enough to spot it early", "Pair with Noelle or Wren for max bed defense value", "Good on narrow paths — useless in open flat areas"],
+    name: "Snap Trap (Trapper Kit)",
+    icon: "🪤",
+    color: "#06b6d4",
+    rgb: "6,182,212",
+    status: "Kit-only",
+    link: "https://robloxbedwars.fandom.com/wiki/Snap_Trap",
+    what: "A Trapper kit item that places a hidden floor trap. Enemies stepping on it trigger crowd-control and become easier to finish.",
+    placement: ["Place in bridge choke points where players sprint in straight lines", "Hide it just outside your bed defense so rushers trigger before entering", "Drop one after forcing enemies to path through a narrow side route"],
+    counters: "Look for suspicious floor placements and clear them with safe spacing before hard pushing.",
+    tips: ["Best value when you force movement into one lane", "Place during downtime, not while being directly rushed", "Pair with team focus fire when the trap triggers"],
   },
   {
-    name: "TNT Trap", icon: "💣", color: "#ef4444", rgb: "239,68,68",
-    what: "Explodes when triggered, dealing burst damage and knockback.",
-    placement: ["Directly under your bed — not visible and triggers on approach", "At generator or bridge entry points", "Combine with obsidian: enemy breaks through and immediately takes TNT damage"],
-    counters: "Trigger from range with a projectile, or scout with blocks before walking in.",
-    tips: ["Counter TNT is essential — always have one ready for enemy traps", "Doesn't trigger from above — enemies who build over your bed won't set it off", "Stack with Frost Trap for slow + burst = almost unavoidable"],
+    name: "Tesla Coil Trap",
+    icon: "⚡",
+    color: "#ef4444",
+    rgb: "239,68,68",
+    status: "Item shop",
+    link: "https://robloxbedwars.fandom.com/wiki/Tesla_Coil_Trap",
+    what: "A placeable trap block that zaps nearby enemy players for repeated damage over time.",
+    placement: ["Place near your bed entrance so enemies must either tank damage or stop to break it", "Use around mid control platforms to punish close-range fights", "Protect it with blocks so fireballs/TNT cannot remove it instantly"],
+    counters: "Break it immediately from range with projectiles or quickly melee it before full commit.",
+    tips: ["Strongest when enemies are forced to hold space nearby", "Don’t place it where opponents can ignore it and walk around", "Use when defending against repeated team pushes"],
   },
   {
-    name: "Alarm Trap", icon: "🔔", color: "#f59e0b", rgb: "245,158,11",
-    what: "Alerts the whole team when triggered. Gives warning time before a bed break.",
-    placement: ["Inside your bed defense layers so it triggers before the breaker reaches the bed", "Near generator for early warning on rushes", "Layer with Frost Trap: alarm gives time, frost gives slow"],
-    counters: "Silently destroy it before the real attack — send a scout first.",
-    tips: ["Invaluable in late game when everyone is busy mid-map", "Let your BD know you placed it so they don't ignore the alert", "Cheap enough to buy multiple — layer them"],
+    name: "Gloop (Glue Trap Projectile)",
+    icon: "🟢",
+    color: "#f59e0b",
+    rgb: "245,158,11",
+    status: "Item shop",
+    link: "https://robloxbedwars.fandom.com/wiki/Gloop",
+    what: "A throwable trap-like projectile that slows and grounds enemies, disabling many movement tools.",
+    placement: ["Throw into chokepoints before melee engage", "Use on bridge fights to prevent escape tools", "Pre-throw on enemies preparing to pearl or mobility rush"],
+    counters: "Bait the throw first, then re-engage while it is on cooldown.",
+    tips: ["Use as engage setup instead of panic throw", "Great against mobility-heavy kits", "Coordinate timing so teammates swing right as it procs"],
   },
   {
-    name: "Fire Trap", icon: "🔥", color: "#f97316", rgb: "249,115,22",
-    what: "Sets enemies on fire when triggered, dealing damage over time.",
-    placement: ["Right at bed entry — enemy takes fire damage while breaking", "Before a narrow bridge chokepoint", "Pair with TNT for burst + DoT on bed defense"],
-    counters: "Bring a water bucket or fire resistance. Running through doesn't always cancel fire.",
-    tips: ["Fire DoT can finish off low health enemies after they escape", "Less reliable than TNT for raw burst — use as backup layer", "Underused in ranked — most don't expect it"],
+    name: "Fish Trap (Fish Net - Removed)",
+    icon: "🐟",
+    color: "#f97316",
+    rgb: "249,115,22",
+    status: "Removed item",
+    link: "https://robloxbedwars.fandom.com/wiki/Fish_Net",
+    what: "Fish Net was a trap-style utility item from older updates and is no longer available in normal matches.",
+    placement: ["Historical item: no current placement in live queues", "Only relevant for old clips/legacy discussions", "Can appear in older guide references as a 'fish trap'"],
+    counters: "Not needed in current games because this item is removed.",
+    tips: ["Use current trap tools like Tesla/Gloop instead", "If you see old tutorials with fish trap paths, treat them as outdated", "Keep this entry as a quick reality check for returning players"],
   },
   {
-    name: "Void Trap", icon: "🌑", color: "#7c3aed", rgb: "124,58,237",
-    what: "Drops enemies into the void when triggered. Instant kill if they fall.",
-    placement: ["At bridge edges where enemies are close to the void", "Replacing floor blocks before an enemy rush", "Near your bed on island edges"],
-    counters: "Build floor blocks before walking across suspicious areas. Check for missing blocks.",
-    tips: ["Most impactful trap in the game but requires set-up time", "Works best with team coordination — hold fire until they're on it", "Combo: Frost Trap first → void trap finish when they're slowed"],
+    name: "Glue Trap (Unused/Test Item)",
+    icon: "🧪",
+    color: "#7c3aed",
+    rgb: "124,58,237",
+    status: "Unused content",
+    link: "https://robloxbedwars.fandom.com/wiki/Glue_Trap",
+    what: "Glue Trap exists as unused/test content and is not part of normal gameplay.",
+    placement: ["Not placeable in current public matches", "Do not rely on this in ranked strategy", "Listed to prevent confusion with the active Gloop item"],
+    counters: "No counter needed in live queues.",
+    tips: ["People often confuse Glue Trap with Gloop", "If a guide says Glue Trap is buyable, it is outdated", "Use Gloop page for live mechanics"],
   },
   {
-    name: "Spike Trap", icon: "🗡️", color: "#94a3b8", rgb: "148,163,184",
-    what: "Deals damage to anyone who walks on it. Less burst than TNT but reusable and harder to spot.",
-    placement: ["Across the full width of your bed bridge", "At generator approach routes", "Stacked in layers with other traps"],
-    counters: "Jump over, place blocks over it, or approach from an angle that avoids it.",
-    tips: ["Pairs well with Frost Trap — enemy gets slowed then hit by spikes", "Cheaper than TNT so you can buy several", "Place just before a fight when you expect a rush"],
-  },
-  {
-    name: "Speed Trap", icon: "💨", color: "#10b981", rgb: "16,185,129",
-    what: "Gives the person who triggers it a short speed boost.",
-    placement: ["On your own side for escape routes or fast rotation", "Near an edge — speed + edge = void potential", "At generator for faster farming cycles"],
-    counters: "Let an ally trigger it first to take control of the speed boost.",
-    tips: ["Most teams don't use this offensively enough", "Combine with void trap — speed gets enemy to the edge, void finishes", "Good in late game for escaping outnumbered situations"],
-  },
-  {
-    name: "Healing Trap", icon: "💚", color: "#22c55e", rgb: "34,197,94",
-    what: "Heals allies who walk over it. Niche but strong in sustained fights.",
-    placement: ["Behind your bed — allies defending get healed passively", "At a chokepoint where your team fights repeatedly", "Near generator so your BD heals while farming"],
-    counters: "Force enemies off the heal zone with knockback before engaging.",
-    tips: ["Underused — most players forget it exists", "Strong with Noelle or any defender who stays near bed", "Doesn't heal enemies — confirmed ally-only"],
+    name: "Trap Reality Check",
+    icon: "✅",
+    color: "#10b981",
+    rgb: "16,185,129",
+    status: "Guide note",
+    link: "https://robloxbedwars.fandom.com/wiki/Item_Shop",
+    what: "Use this tab for currently recognized trap-style items and clearly marked removed/unused entries.",
+    placement: ["Prefer pages with update history when checking item availability", "If an item is marked removed, don't build ranked strategies around it", "Check patch notes before trusting old clips"],
+    counters: "Counter misinformation by verifying with current item pages.",
+    tips: ["This section now prioritizes real items + status labels", "Returning players should double-check old trap memories", "Keep links handy so teammates can confirm quickly"],
   },
 ];
 
@@ -671,6 +687,7 @@ function StrapCard({ strap, dark }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace", color: strap.color, marginBottom: 3 }}>{strap.name}</div>
             <p style={{ fontSize: 12, color: dark ? "rgba(255,255,255,.42)" : "rgba(0,0,0,.45)", lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{strap.what}</p>
+            <p style={{ margin: "5px 0 0", fontSize: 10, fontWeight: 700, fontFamily: "'DM Mono',monospace", letterSpacing: ".08em", textTransform: "uppercase", color: dark ? "rgba(255,255,255,.46)" : "rgba(0,0,0,.46)" }}>{strap.status}</p>
           </div>
           <div style={{ color: dark ? "rgba(255,255,255,.3)" : "rgba(0,0,0,.3)" }}>
             <ChevronIcon open={open} />
@@ -680,6 +697,15 @@ function StrapCard({ strap, dark }) {
         <div style={{ overflow: "hidden", maxHeight: open ? 900 : 0, opacity: open ? 1 : 0, transition: "max-height 0.45s cubic-bezier(0.32,0.72,0,1), opacity 0.25s ease" }}>
           <div style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 9 }}>
             <p style={{ fontSize: 13.5, lineHeight: 1.7, color: dark ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.55)", margin: 0 }}>{strap.what}</p>
+            <a
+              href={strap.link}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 12, color: strap.color, fontWeight: 700, textDecoration: "none", width: "fit-content" }}
+            >
+              Official/reference link ↗
+            </a>
             {/* placement */}
             <div style={{ background: `rgba(${strap.rgb},.05)`, border: `1px solid rgba(${strap.rgb},.14)`, borderRadius: 14, padding: "13px 15px" }}>
               <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace", color: strap.color, marginBottom: 9 }}>Placement</div>
@@ -719,7 +745,7 @@ function TabBar({ tab, setTab, dark }) {
     { key: "ms", label: "MS", icon: "🖱️", color: "#f59e0b" },
     { key: "fflags", label: "FFlags", icon: "🚩", color: "#10b981" },
     { key: "fps", label: "FPS", icon: "⚡", color: "#8b5cf6" },
-    { key: "straps", label: "Straps", icon: "🧊", color: "#06b6d4" },
+    { key: "straps", label: "Traps", icon: "🧊", color: "#06b6d4" },
   ];
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: dark ? "rgba(6,7,12,.9)" : "rgba(255,255,255,.88)", backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)", borderTop: `1px solid ${dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.08)"}`, display: "flex", paddingBottom: "env(safe-area-inset-bottom,0px)" }}>
@@ -804,8 +830,8 @@ export default function App() {
           <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace", color: dark ? "rgba(255,255,255,.78)" : "rgba(0,0,0,.75)" }}>Roblox BedWars · PvP Guide</span>
         </div>
         <h1 style={{ margin: "0 0 10px", fontSize: "clamp(3rem,11vw,5.8rem)", fontWeight: 900, letterSpacing: "-.05em", lineHeight: .9, fontFamily: "'Oxanium',sans-serif", color: dark ? "#fff" : "#0f0f10" }}>Combat</h1>
-        <p style={{ margin: "0 0 6px", fontSize: "clamp(.95rem,3.5vw,1.4rem)", fontWeight: 700, fontFamily: "'Oxanium',sans-serif", letterSpacing: "-.02em", color: dark ? "rgba(255,255,255,.75)" : "rgba(0,0,0,.75)" }}>PvP · Settings · Straps</p>
-        <p style={{ margin: "14px auto 0", maxWidth: 520, fontSize: 14.4, lineHeight: 1.8, color: dark ? "rgba(255,255,255,.42)" : "rgba(0,0,0,.52)" }}>Everything you need to hit harder, lag less, and use your straps properly in ranked.</p>
+        <p style={{ margin: "0 0 6px", fontSize: "clamp(.95rem,3.5vw,1.4rem)", fontWeight: 700, fontFamily: "'Oxanium',sans-serif", letterSpacing: "-.02em", color: dark ? "rgba(255,255,255,.75)" : "rgba(0,0,0,.75)" }}>PvP · Settings · Traps</p>
+        <p style={{ margin: "14px auto 0", maxWidth: 520, fontSize: 14.4, lineHeight: 1.8, color: dark ? "rgba(255,255,255,.42)" : "rgba(0,0,0,.52)" }}>Real trap-style BedWars items with status tags, descriptions, and direct links.</p>
 
         <div style={{ marginTop: 20 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 999, background: dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.04)", border: `1px solid ${dark ? "rgba(255,255,255,.09)" : "rgba(0,0,0,.09)"}`, fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 600, color: dark ? "#fff" : "#0f0f10" }}>
@@ -818,7 +844,7 @@ export default function App() {
             { val: "34", label: "hitreg cap", color: "#ef4444", sub: "hits / 10s" },
             { val: "3.4", label: "optimal CPS", color: "#f59e0b", sub: "clicks / sec" },
             { val: String(FFLAGS.length), label: "total fflags", color: "#10b981", sub: "performance flags" },
-            { val: String(STRAPS.length), label: "straps listed", color: "#8b5cf6", sub: "strap types" },
+            { val: String(STRAPS.length), label: "traps listed", color: "#8b5cf6", sub: "trap entries" },
           ].map((s) => (
             <div key={s.label} style={{ borderRadius: 20, background: dark ? "rgba(14,15,22,.8)" : "rgba(255,255,255,.88)", border: `1px solid ${dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.08)"}`, backdropFilter: "blur(20px)", padding: "14px 16px", textAlign: "left" }}>
               <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace", color: dark ? "rgba(255,255,255,.3)" : "rgba(0,0,0,.35)", marginBottom: 5 }}>{s.label}</div>
@@ -850,7 +876,7 @@ export default function App() {
       <div className="fade" style={{ maxWidth: 960, margin: "24px auto 0", padding: "0 18px", position: "relative", zIndex: 5 }}>
         <div style={{ borderRadius: 28, padding: "28px 22px", background: dark ? "linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.025))" : "linear-gradient(135deg,rgba(255,255,255,.95),rgba(247,247,244,.96))", border: `1px solid ${dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.08)"}`, backdropFilter: "blur(24px)", textAlign: "center" }}>
           <h3 style={{ margin: "0 0 8px", fontSize: "clamp(1.15rem,4vw,1.6rem)", fontWeight: 900, fontFamily: "'Oxanium',sans-serif", letterSpacing: "-.03em", color: dark ? "#fff" : "#0f0f10" }}>Hit harder. Lag less.</h3>
-          <p style={{ margin: "0 auto", maxWidth: 460, fontSize: 13.4, lineHeight: 1.72, color: dark ? "rgba(255,255,255,.48)" : "rgba(0,0,0,.52)" }}>Combat mechanics, optimized settings, and strap usage for ranked players who want every edge.</p>
+          <p style={{ margin: "0 auto", maxWidth: 460, fontSize: 13.4, lineHeight: 1.72, color: dark ? "rgba(255,255,255,.48)" : "rgba(0,0,0,.52)" }}>Combat mechanics, optimized settings, and real trap info for ranked players who want every edge.</p>
           <div style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 999, background: dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.03)", border: `1px solid ${dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)"}` }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: dark ? "#fff" : "#0f0f10" }} />
             <span style={{ fontSize: 10.5, fontWeight: 800, fontFamily: "'DM Mono',monospace", letterSpacing: ".1em", textTransform: "uppercase", color: dark ? "rgba(255,255,255,.7)" : "rgba(0,0,0,.7)" }}>made by justcyril</span>
