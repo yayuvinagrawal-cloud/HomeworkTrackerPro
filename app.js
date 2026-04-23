@@ -1,8 +1,10 @@
-// app.js – Professional Homework Tracker Logic
+// app.js – Premium Homework Tracker with Dark Mode
 
 (function() {
   // ---------- STATE ----------
   let assignments = [];
+  let streak = 0;
+  let lastCompletedDate = null;
 
   // ---------- DOM ELEMENTS ----------
   const form = document.getElementById('assignmentForm');
@@ -11,14 +13,19 @@
   const dueDateInput = document.getElementById('dueDateInput');
   const prioritySelect = document.getElementById('prioritySelect');
   const assignmentsList = document.getElementById('assignmentsList');
-  const emptyState = document.getElementById('emptyState');
   const progressBar = document.getElementById('progressBar');
   const completedCountSpan = document.getElementById('completedCount');
   const totalCountSpan = document.getElementById('totalCount');
   const currentDateEl = document.getElementById('currentDate');
   const filterButtons = document.querySelectorAll('.filter-btn');
+  const searchInput = document.getElementById('searchInput');
+  const themeToggle = document.getElementById('themeToggle');
+  const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+  const streakCountEl = document.getElementById('streakCount');
+  const motivationText = document.getElementById('motivationText');
 
-  let currentFilter = 'all'; // all, today, upcoming, overdue
+  let currentFilter = 'all';
+  let searchQuery = '';
 
   // ---------- HELPERS ----------
   function getTodayDateString() {
@@ -36,22 +43,83 @@
   }
 
   function isOverdue(dueDateStr) {
-    const today = getTodayDateString();
-    return dueDateStr < today;
+    return dueDateStr < getTodayDateString();
   }
 
   function isToday(dueDateStr) {
     return dueDateStr === getTodayDateString();
   }
 
+  function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  // ---------- THEME ----------
+  function loadTheme() {
+    const saved = localStorage.getItem('homeworkTrackerTheme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+    }
+  }
+
+  function toggleTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('homeworkTrackerTheme', 'light');
+      themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('homeworkTrackerTheme', 'dark');
+      themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+  }
+
+  // ---------- STREAK & MOTIVATION ----------
+  function updateStreak() {
+    const completedCount = assignments.filter(a => a.completed).length;
+    const total = assignments.length;
+    
+    if (completedCount > 0 && total > 0) {
+      streak = Math.min(streak + 1, 365);
+    }
+    if (completedCount === total && total > 0) {
+      streak = Math.max(streak, 1);
+    }
+    
+    streakCountEl.textContent = streak;
+    
+    // motivation
+    if (completedCount === total && total > 0) {
+      motivationText.textContent = 'All done! 🎉';
+    } else if (assignments.some(a => !a.completed && isOverdue(a.dueDate))) {
+      motivationText.textContent = 'Overdue items! 😰';
+    } else if (completedCount > total / 2 && total > 0) {
+      motivationText.textContent = 'Halfway there! 💪';
+    } else if (completedCount > 0) {
+      motivationText.textContent = 'Keep going! 🚀';
+    } else if (total > 0) {
+      motivationText.textContent = 'Time to focus! 📚';
+    } else {
+      motivationText.textContent = 'Add a task! ✨';
+    }
+  }
+
+  // ---------- PROGRESS ----------
   function updateProgress() {
     const total = assignments.length;
     const completed = assignments.filter(a => a.completed).length;
     const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
-    
     progressBar.style.width = `${percent}%`;
     completedCountSpan.textContent = completed;
     totalCountSpan.textContent = total;
+    updateStreak();
   }
 
   function setCurrentDate() {
@@ -60,13 +128,22 @@
     currentDateEl.textContent = today.toLocaleDateString('en-US', options);
   }
 
-  // ---------- RENDER ----------
+  // ---------- FILTER & SEARCH ----------
   function filterAssignments() {
     const todayStr = getTodayDateString();
+    const query = searchQuery.toLowerCase().trim();
     
     return assignments.filter(assignment => {
+      // search filter
+      if (query) {
+        const matchesSearch = 
+          assignment.title.toLowerCase().includes(query) ||
+          assignment.subject.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      
+      // hide completed from filtered views
       if (assignment.completed && currentFilter !== 'all') {
-        // keep completed visible in 'all', but hide from other filters for cleaner view
         return false;
       }
       
@@ -84,25 +161,23 @@
     });
   }
 
+  // ---------- RENDER ----------
   function renderAssignments() {
     const filtered = filterAssignments();
-    
-    // clear list
     assignmentsList.innerHTML = '';
     
     if (filtered.length === 0) {
       assignmentsList.innerHTML = `
-        <div class="empty-state" id="emptyState">
+        <div class="empty-state">
           <div class="empty-icon"><i class="far fa-clipboard"></i></div>
-          <p>No assignments here</p>
-          <p class="sub">${currentFilter === 'all' ? 'Add one to get started ✨' : 'Try another filter'}</p>
+          <p>${searchQuery ? 'No matches found' : 'No assignments here'}</p>
+          <p class="sub">${searchQuery ? 'Try a different search' : (currentFilter === 'all' ? 'Add one to get started ✨' : 'Try another filter')}</p>
         </div>
       `;
       updateProgress();
       return;
     }
     
-    // sort: overdue first, then by date ascending
     const sorted = [...filtered].sort((a, b) => {
       if (a.dueDate < b.dueDate) return -1;
       if (a.dueDate > b.dueDate) return 1;
@@ -139,21 +214,15 @@
       assignmentsList.appendChild(card);
     });
     
-    // attach event listeners to check buttons
+    // attach check button events
     document.querySelectorAll('.check-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         toggleComplete(id);
       });
     });
     
     updateProgress();
-  }
-
-  function escapeHTML(str) {
-    const div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
   }
 
   // ---------- ACTIONS ----------
@@ -167,47 +236,60 @@
       completed: false,
       createdAt: new Date().toISOString()
     };
-    
     assignments.push(newAssignment);
     renderAssignments();
-    saveToLocalStorage();
+    saveAll();
   }
 
   function toggleComplete(id) {
     const assignment = assignments.find(a => a.id === id);
     if (assignment) {
       assignment.completed = !assignment.completed;
+      if (assignment.completed) {
+        const today = getTodayDateString();
+        if (lastCompletedDate !== today) {
+          lastCompletedDate = today;
+          streak++;
+        }
+      }
       renderAssignments();
-      saveToLocalStorage();
+      saveAll();
+    }
+  }
+
+  function clearCompleted() {
+    const hasCompleted = assignments.some(a => a.completed);
+    if (!hasCompleted) return;
+    if (confirm('Remove all completed assignments?')) {
+      assignments = assignments.filter(a => !a.completed);
+      renderAssignments();
+      saveAll();
     }
   }
 
   // ---------- STORAGE ----------
-  function saveToLocalStorage() {
+  function saveAll() {
     localStorage.setItem('homeworkTrackerAssignments', JSON.stringify(assignments));
+    localStorage.setItem('homeworkTrackerStreak', streak);
+    localStorage.setItem('homeworkTrackerLastDate', lastCompletedDate || '');
   }
 
-  function loadFromLocalStorage() {
+  function loadAll() {
     const stored = localStorage.getItem('homeworkTrackerAssignments');
     if (stored) {
-      try {
-        assignments = JSON.parse(stored);
-      } catch (e) {
-        assignments = [];
-      }
+      try { assignments = JSON.parse(stored); } catch (e) { assignments = []; }
     }
+    const storedStreak = localStorage.getItem('homeworkTrackerStreak');
+    if (storedStreak) streak = parseInt(storedStreak) || 0;
+    const storedDate = localStorage.getItem('homeworkTrackerLastDate');
+    if (storedDate) lastCompletedDate = storedDate;
   }
 
   // ---------- FILTER HANDLING ----------
   function setFilter(filterValue) {
     currentFilter = filterValue;
     filterButtons.forEach(btn => {
-      const btnFilter = btn.getAttribute('data-filter');
-      if (btnFilter === filterValue) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
+      btn.classList.toggle('active', btn.getAttribute('data-filter') === filterValue);
     });
     renderAssignments();
   }
@@ -215,38 +297,38 @@
   // ---------- EVENT LISTENERS ----------
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    
     const subject = subjectInput.value.trim();
     const title = titleInput.value.trim();
     const dueDate = dueDateInput.value;
     const priority = prioritySelect.value;
-    
     if (!subject || !title || !dueDate) {
       alert('Please fill in all fields');
       return;
     }
-    
     addAssignment(subject, title, dueDate, priority);
-    
-    // reset form
     form.reset();
     prioritySelect.value = 'normal';
-    // set date input to today as convenience
     dueDateInput.value = getTodayDateString();
   });
 
   filterButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const filter = btn.getAttribute('data-filter');
-      setFilter(filter);
-    });
+    btn.addEventListener('click', () => setFilter(btn.getAttribute('data-filter')));
   });
 
-  // ---------- INITIALIZATION ----------
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderAssignments();
+  });
+
+  themeToggle.addEventListener('click', toggleTheme);
+
+  clearCompletedBtn.addEventListener('click', clearCompleted);
+
+  // ---------- INIT ----------
   function init() {
+    loadTheme();
     setCurrentDate();
-    loadFromLocalStorage();
-    // set default date input to today
+    loadAll();
     dueDateInput.value = getTodayDateString();
     renderAssignments();
   }
