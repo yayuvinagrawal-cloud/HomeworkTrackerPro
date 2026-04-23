@@ -586,16 +586,21 @@
     dueDateInput.value = getToday();
   });
 
-  // Suggestion "Add" button
-  suggestionAction.addEventListener('click', function() {
+  // Suggestion "Add" button — fixed with onclick for reliability
+  suggestionAction.onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     const text = suggestionText.textContent;
-    const match = text.match(/You often have (\w+) homework/);
-    if (match) {
-      subjectInput.value = match[1];
+    // Extract subject from "You often have X homework. Add one?"
+    const words = text.split(' ');
+    const subjectWord = words[3]; // "ck12" or whatever subject
+    if (subjectWord) {
+      subjectInput.value = subjectWord;
       titleInput.focus();
       smartSuggestion.style.display = 'none';
     }
-  });
+    return false;
+  };
 
   filterChips.forEach(chip => {
     chip.addEventListener('click', function() {
