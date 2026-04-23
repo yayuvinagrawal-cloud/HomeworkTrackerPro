@@ -253,12 +253,21 @@
 
   // ========== SMART SUGGESTION ==========
   function updateSuggestion() {
-    const subjects = [...new Set(assignments.filter(a => !a.completed).map(a => a.subject.toLowerCase()))];
-    if (subjects.length === 0) { smartSuggestion.style.display = 'none'; return; }
+    const incompleteSubjects = [...new Set(assignments.filter(a => !a.completed).map(a => a.subject.toLowerCase()))];
+    if (incompleteSubjects.length === 0) { 
+      smartSuggestion.style.display = 'none'; 
+      return; 
+    }
     const counts = {};
-    assignments.filter(a => !a.completed).forEach(a => { const k = a.subject.toLowerCase(); counts[k] = (counts[k]||0)+1; });
+    assignments.filter(a => !a.completed).forEach(a => { 
+      const k = a.subject.toLowerCase(); 
+      counts[k] = (counts[k]||0)+1; 
+    });
     const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-    if (sorted.length === 0) { smartSuggestion.style.display = 'none'; return; }
+    if (sorted.length === 0) { 
+      smartSuggestion.style.display = 'none'; 
+      return; 
+    }
     const top = sorted[0][0];
     suggestionText.textContent = `You often have ${top} homework. Add one?`;
     smartSuggestion.style.display = 'flex';
