@@ -450,7 +450,7 @@ function XmbcCard({ dark }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 13 }}>
         {[
           { checked: true, label: "Block original mouse input — enabled" },
-          { checked: true, label: "Randomise auto repeat delay by 10% — disabled" },
+          { checked: false, label: "Randomise auto repeat delay by 10% — disabled" },
           { checked: false, label: "Block original mouse input only if active window matches — off" },
           { checked: false, label: "Only send if profile's process is active — off" },
         ].map((row, i) => (
