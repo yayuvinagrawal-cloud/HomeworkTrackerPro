@@ -1,4 +1,4 @@
-// app.js – Homework Tracker v4.1 (Fully Fixed)
+// app.js – Homework Tracker v4.2 (Auto-archive removed, fully fixed)
 (function() {
   let assignments = [];
   let archivedAssignments = [];
@@ -151,7 +151,11 @@
   function updateProgressRing(pct) { progressRing.style.strokeDashoffset=CIRCUMFERENCE-(pct/100)*CIRCUMFERENCE; progressPercent.textContent=`${Math.round(pct)}%`; }
   function updateStats() {
     const total=assignments.length, completed=assignments.filter(a=>a.completed).length, overdue=assignments.filter(a=>!a.completed&&isOverdue(a.dueDate)).length, pct=total===0?0:(completed/total)*100;
-    updateProgressRing(pct); animateNumber(completedCountSpan,parseInt(completedCountSpan.textContent)||0,completed); animateNumber(totalCountSpan,parseInt(totalCountSpan.textContent)||0,total); overdueCountSpan.textContent=overdue; streakCountEl.textContent=streak;
+    updateProgressRing(pct); 
+    animateNumber(completedCountSpan,parseInt(completedCountSpan.textContent)||0,completed); 
+    animateNumber(totalCountSpan,parseInt(totalCountSpan.textContent)||0,total); 
+    animateNumber(overdueCountSpan,parseInt(overdueCountSpan.textContent)||0,overdue);
+    streakCountEl.textContent=streak;
     if(total>0&&completed===total&&!confettiFiredForThisSet){confettiFiredForThisSet=true;setTimeout(launchConfetti,200);}
     if(completed<total)confettiFiredForThisSet=false;
     updateTabTitle(overdue); updateWorkload();
@@ -188,10 +192,8 @@
     const top=sorted[0][0];
     suggestionText.textContent=`You often have ${top} homework. Add one?`;
     smartSuggestion.style.display='flex';
-    // Remove all old listeners and add fresh one
     const newBtn = suggestionAction.cloneNode(true);
     suggestionAction.parentNode.replaceChild(newBtn, suggestionAction);
-    // Re-assign the global reference
     window._suggestionAction = newBtn;
     newBtn.addEventListener('click', function(e) {
       e.preventDefault(); e.stopPropagation();
@@ -201,7 +203,6 @@
       smartSuggestion.style.display = 'none';
     });
   }
-  // Re-reference after clone
   function getSuggestionAction() { return window._suggestionAction || $('#suggestionAction'); }
 
   function filterAndSort() {
@@ -225,7 +226,7 @@
     assignmentsList.innerHTML=''; dashboardView.style.display='none'; archiveView.style.display='none'; assignmentsList.style.display='flex';
     if(filtered.length===0){
       const rq=quotes[Math.floor(Math.random()*quotes.length)];
-      assignmentsList.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg width="70" height="70" viewBox="0 0 80 80" fill="none"><rect x="14" y="10" width="52" height="60" rx="6" stroke="currentColor" stroke-width="2.5" fill="none"/><line x1="28" y1="10" x2="28" y2="70" stroke="currentColor" stroke-width="2.5"/><line x1="18" y1="28" x2="24" y2="28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><p class="empty-title">${searchQuery?'No results':'All clear'}</p><p class="empty-sub">${searchQuery?'Try another search':'Add an assignment to get started'}</p>${!searchQuery?`<p class="empty-quote">${rq}</p>`:''}</div>`;
+      assignmentsList.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg width="70" height="70" viewBox="0 0 80 80" fill="none"><rect x="14" y="10" width="52" height="60" rx="6" stroke="currentColor" stroke-width="2.5" fill="none"/><line x1="28" y1="10" x2="28" y2="70" stroke="currentColor" stroke-width="2.5"/><line x1="18" y1="28" x2="24" y2="28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="34" y1="28" x2="50" y2="28" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/></svg></div><p class="empty-title">${searchQuery?'No results':'All clear'}</p><p class="empty-sub">${searchQuery?'Try another search':'Add an assignment to get started'}</p>${!searchQuery?`<p class="empty-quote">${rq}</p>`:''}</div>`;
       updateStats();return;
     }
     filtered.forEach(a=>{
@@ -265,7 +266,7 @@
 
   function renderArchive() {
     assignmentsList.style.display='none'; dashboardView.style.display='none'; archiveView.style.display='flex';
-    archiveView.innerHTML=archivedAssignments.length===0?`<div class="empty-state"><div class="empty-icon"><i class="fas fa-archive"></i></div><p class="empty-title">Empty archive</p><p class="empty-sub">Completed assignments will appear here</p></div>`:archivedAssignments.map(a=>`<div class="assignment-card" style="opacity:0.7"><div class="assignment-left"><div class="assignment-content"><span class="assignment-title" style="text-decoration:line-through">${esc(a.title)}</span><div class="assignment-meta"><span class="subject-tag" style="background:${getSubjectColor(a.subject)}">${esc(a.subject)}</span><span class="due-tag"><i class="far fa-calendar-alt"></i> ${formatDate(a.dueDate)}</span></div></div></div><button class="btn-text restore-btn" data-id="${a.id}" style="font-size:0.7rem;color:var(--accent)">Restore</button></div>`).join('');
+    archiveView.innerHTML=archivedAssignments.length===0?`<div class="empty-state"><div class="empty-icon"><i class="fas fa-archive"></i></div><p class="empty-title">Empty archive</p><p class="empty-sub">Use "Clear completed" to move done items here</p></div>`:archivedAssignments.map(a=>`<div class="assignment-card" style="opacity:0.7"><div class="assignment-left"><div class="assignment-content"><span class="assignment-title" style="text-decoration:line-through">${esc(a.title)}</span><div class="assignment-meta"><span class="subject-tag" style="background:${getSubjectColor(a.subject)}">${esc(a.subject)}</span><span class="due-tag"><i class="far fa-calendar-alt"></i> ${formatDate(a.dueDate)}</span></div></div></div><button class="btn-text restore-btn" data-id="${a.id}" style="font-size:0.7rem;color:var(--accent)">Restore</button></div>`).join('');
     document.querySelectorAll('.restore-btn').forEach(btn=>{btn.onclick=function(){const a=archivedAssignments.find(x=>x.id===this.dataset.id);if(a){archivedAssignments=archivedAssignments.filter(x=>x.id!==a.id);assignments.push({...a,completed:false});renderAssignments();saveAll();showToast('Restored');}};});
     updateStats();
   }
@@ -297,16 +298,16 @@
       const today=getToday(); if(lastCompletedDate!==today){lastCompletedDate=today;streak=Math.min(streak+1,365);}
       playSound('complete');haptic('success');pushUndo('complete',{id});
       showToast('Completed! 🎉',()=>{a.completed=false;confettiFiredForThisSet=false;renderAssignments();saveAll();});
-      setTimeout(()=>{if(a.completed&&assignments.includes(a)){assignments=assignments.filter(x=>x.id!==id);archivedAssignments.push(a);renderAssignments();saveAll();}},2000);
     }
     renderAssignments();saveAll();
   }
 
   function deleteAssignment(id){const a=assignments.find(x=>x.id===id);if(!a)return;assignments=assignments.filter(x=>x.id!==id);pushUndo('delete',{...a});renderAssignments();saveAll();haptic('delete');showToast('Deleted',()=>{assignments.push(a);renderAssignments();saveAll();});}
+  
   function clearCompleted(){
-    const ci=assignments.filter(a=>a.completed); if(ci.length===0){showToast('No completed items');return;}
+    const ci=assignments.filter(a=>a.completed); if(ci.length===0){showToast('No completed items to clear');return;}
     archivedAssignments.push(...ci); assignments=assignments.filter(a=>!a.completed); confettiFiredForThisSet=false; pushUndo('clear',ci);
-    renderAssignments();saveAll(); showToast(`Archived ${ci.length} items`,()=>{archivedAssignments=archivedAssignments.filter(a=>!ci.includes(a));assignments.push(...ci);renderAssignments();saveAll();});
+    renderAssignments();saveAll(); showToast(`Archived ${ci.length} item${ci.length>1?'s':''}`,()=>{archivedAssignments=archivedAssignments.filter(a=>!ci.includes(a));assignments.push(...ci);renderAssignments();saveAll();});
   }
 
   function pasteSyllabus(){
