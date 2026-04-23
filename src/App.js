@@ -676,6 +676,19 @@ function FpsSection({ dark }) {
 }
 
 /* ─── STRAP CARD ─── */
+function TrapsQuickStart({ dark }) {
+  return (
+    <div style={{ borderRadius: 20, background: dark ? "rgba(14,15,22,.78)" : "rgba(255,255,255,.84)", border: `1px solid ${dark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.08)"}`, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", padding: "16px 18px" }}>
+      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace", color: "#06b6d4", marginBottom: 8 }}>What to do</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: dark ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.55)" }}>1) Open a trap card and read the <strong>Status</strong> first.</p>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: dark ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.55)" }}>2) If status says <strong>Removed</strong> or <strong>Unused</strong>, don’t use it in ranked.</p>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: dark ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.55)" }}>3) Click <strong>Official/reference link</strong> to verify details before buying/using.</p>
+      </div>
+    </div>
+  );
+}
+
 function StrapCard({ strap, dark }) {
   const [open, setOpen] = useState(false);
   const cardBg = dark ? "rgba(14,15,22,.78)" : "rgba(255,255,255,.84)";
@@ -867,6 +880,7 @@ export default function App() {
         {tab === "fps" && <FpsSection dark={dark} />}
         {tab === "straps" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <TrapsQuickStart dark={dark} />
             {STRAPS.map((s, i) => <StrapCard key={i} strap={s} dark={dark} />)}
           </div>
         )}
