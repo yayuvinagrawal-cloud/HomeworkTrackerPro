@@ -1,4 +1,4 @@
-// app.js – Homework Tracker v3.0
+// app.js – Homework Tracker v3.0.1 (Fixed check button)
 // Confetti + Swipe + Undo + Skeleton + Recurring + Share + all previous features
 
 (function() {
@@ -9,7 +9,7 @@
   let subjectColorMap = {};
   let sortOrder = 'date-asc';
   let currentModalId = null;
-  let undoStack = []; // { action: 'complete'|'delete', assignment, timeout }
+  let undoStack = [];
 
   // ========== DOM ==========
   const $ = (s) => document.querySelector(s);
@@ -189,12 +189,11 @@
       undoBtn.addEventListener('click', () => {
         undoCallback();
         toast.remove();
-        clearTimeout(timer);
       });
       toast.appendChild(undoBtn);
     }
     toastContainer.appendChild(toast);
-    const timer = setTimeout(() => toast.remove(), undoCallback ? 4000 : 3000);
+    setTimeout(() => toast.remove(), undoCallback ? 4000 : 3000);
   }
 
   // ========== HAPTICS & SOUND ==========
@@ -243,7 +242,6 @@
     overdueCountSpan.textContent = overdue;
     streakCountEl.textContent = streak;
 
-    // Confetti on 100%
     if (total > 0 && completed === total) {
       launchConfetti();
     }
@@ -351,26 +349,37 @@
         <button class="check-btn" data-id="${a.id}"><i class="fas fa-check"></i></button>
       `;
 
+      // FIXED: Check button click - stop propagation properly
+      const checkBtn = card.querySelector('.check-btn');
+      checkBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        toggleComplete(a.id);
+      });
+
+      // FIXED: Card click only opens modal if NOT swiping and NOT clicking check button
+      card.addEventListener('click', (e) => {
+        if (isSwiping) return;
+        // Don't open modal if check button was clicked (safety check)
+        if (e.target.closest('.check-btn')) return;
+        openDetailModal(a.id);
+      });
+
       // Swipe events
       card.addEventListener('touchstart', handleSwipeStart, {passive: true});
       card.addEventListener('touchmove', handleSwipeMove, {passive: false});
       card.addEventListener('touchend', handleSwipeEnd);
       card.addEventListener('mousedown', handleSwipeStart);
-      window.addEventListener('mousemove', handleSwipeMove);
-      window.addEventListener('mouseup', handleSwipeEnd);
-
-      // Click for detail
-      card.addEventListener('click', (e) => {
-        if (isSwiping || e.target.closest('.check-btn')) return;
-        openDetailModal(a.id);
-      });
 
       assignmentsList.appendChild(card);
     });
 
-    document.querySelectorAll('.check-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => { e.stopPropagation(); toggleComplete(btn.dataset.id); });
-    });
+    // Global mouse events for swipe
+    window.removeEventListener('mousemove', handleSwipeMove);
+    window.removeEventListener('mouseup', handleSwipeEnd);
+    window.addEventListener('mousemove', handleSwipeMove);
+    window.addEventListener('mouseup', handleSwipeEnd);
 
     updateStats();
     updateSubjectDatalist();
@@ -396,13 +405,10 @@
       e.preventDefault();
       swipingCard.classList.add('swiping');
       swipingCard.style.transform = `translateX(${deltaX}px)`;
-      // Show indicators
       const rightIndicator = swipingCard.querySelector('.swipe-indicator.right');
       const leftIndicator = swipingCard.querySelector('.swipe-indicator.left');
-      if (deltaX > 40) rightIndicator.style.opacity = Math.min(deltaX/80, 1);
-      else rightIndicator.style.opacity = 0;
-      if (deltaX < -40) leftIndicator.style.opacity = Math.min(Math.abs(deltaX)/80, 1);
-      else leftIndicator.style.opacity = 0;
+      if (rightIndicator) rightIndicator.style.opacity = deltaX > 40 ? Math.min(deltaX/80, 1) : 0;
+      if (leftIndicator) leftIndicator.style.opacity = deltaX < -40 ? Math.min(Math.abs(deltaX)/80, 1) : 0;
     }
   }
 
@@ -416,14 +422,13 @@
     if (rightIndicator) rightIndicator.style.opacity = 0;
     if (leftIndicator) leftIndicator.style.opacity = 0;
 
+    const id = swipingCard.dataset.id;
     if (deltaX > 80) {
-      const id = swipingCard.dataset.id;
       swipingCard.classList.add('swiped-right');
-      setTimeout(() => toggleComplete(id), 300);
+      setTimeout(() => { if (id) toggleComplete(id); }, 300);
     } else if (deltaX < -80) {
-      const id = swipingCard.dataset.id;
       swipingCard.classList.add('swiped-left');
-      setTimeout(() => deleteAssignment(id), 300);
+      setTimeout(() => { if (id) deleteAssignment(id); }, 300);
     }
     swipingCard = null;
     isSwiping = false;
@@ -479,9 +484,7 @@
       const today = getToday();
       if (lastCompletedDate !== today) { lastCompletedDate = today; streak = Math.min(streak+1, 365); }
       playSound('complete'); haptic('success');
-      const toastMsg = 'Completed! 🎉';
-      showToast(toastMsg, () => { a.completed = false; renderAssignments(); saveAll(); });
-      undoStack.push({ action: 'complete', id, timeout: setTimeout(() => {}, 4000) });
+      showToast('Completed! 🎉', () => { a.completed = false; renderAssignments(); saveAll(); });
     }
     renderAssignments(); saveAll();
   }
@@ -514,8 +517,7 @@
       generatedAt: new Date().toISOString()
     };
     const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
-    const url = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
-    return url;
+    return `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
   }
 
   function loadSharedData() {
