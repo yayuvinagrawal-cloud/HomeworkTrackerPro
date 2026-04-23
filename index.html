@@ -11,184 +11,203 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Toast notification container -->
+  <!-- Toast container -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- Confetti canvas -->
+  <canvas id="confettiCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
   <div class="container">
-    <!-- header -->
-    <header class="header">
-      <div class="header-top">
-        <div class="logo-group">
-          <div class="logo-mark">
-            <i class="fas fa-graduation-cap"></i>
-          </div>
-          <div>
-            <h1 class="logo">Homework</h1>
-            <p class="logo-subtitle" id="greetingSubtitle">Stay on top of it.</p>
-          </div>
-        </div>
-        <div class="header-actions">
-          <div class="date-display" id="currentDate"></div>
-          <button class="theme-btn" id="themeToggle" aria-label="Toggle theme">
-            <i class="fas fa-moon"></i>
-          </button>
-        </div>
+    <!-- Skeleton loading -->
+    <div class="skeleton-loader" id="skeletonLoader">
+      <div class="skeleton-header">
+        <div class="skeleton-circle"></div>
+        <div class="skeleton-lines"><div class="skeleton-line short"></div><div class="skeleton-line"></div></div>
       </div>
-      
-      <!-- progress section with ring -->
-      <div class="progress-section" id="progressSection">
-        <div class="progress-ring-container">
-          <svg class="progress-ring" viewBox="0 0 100 100">
-            <circle class="progress-ring-bg" cx="50" cy="50" r="42"></circle>
-            <circle class="progress-ring-fill" id="progressRing" cx="50" cy="50" r="42"></circle>
-          </svg>
-          <div class="progress-ring-text">
-            <span class="progress-percent" id="progressPercent">0%</span>
-            <span class="progress-label">complete</span>
+      <div class="skeleton-progress"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+
+    <!-- Main content (hidden during skeleton) -->
+    <div id="mainContent" style="display:none;">
+      <!-- header -->
+      <header class="header">
+        <div class="header-top">
+          <div class="logo-group">
+            <div class="logo-mark"><i class="fas fa-graduation-cap"></i></div>
+            <div>
+              <h1 class="logo">Homework</h1>
+              <p class="logo-subtitle" id="greetingSubtitle">Stay on top of it.</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="theme-btn" id="shareBtn" title="Share"><i class="fas fa-share-nodes"></i></button>
+            <div class="date-display" id="currentDate"></div>
+            <button class="theme-btn" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
           </div>
         </div>
-        <div class="progress-details">
-          <div class="progress-stat">
-            <span class="stat-number" id="completedCount">0</span>
-            <span class="stat-label">Done</span>
+
+        <div class="progress-section" id="progressSection">
+          <div class="progress-ring-container">
+            <svg class="progress-ring" viewBox="0 0 100 100">
+              <circle class="progress-ring-bg" cx="50" cy="50" r="42"></circle>
+              <circle class="progress-ring-fill" id="progressRing" cx="50" cy="50" r="42"></circle>
+            </svg>
+            <div class="progress-ring-text">
+              <span class="progress-percent" id="progressPercent">0%</span>
+              <span class="progress-label">complete</span>
+            </div>
           </div>
-          <div class="progress-divider"></div>
-          <div class="progress-stat">
-            <span class="stat-number" id="totalCount">0</span>
-            <span class="stat-label">Total</span>
+          <div class="progress-details">
+            <div class="progress-stat">
+              <span class="stat-number" id="completedCount">0</span>
+              <span class="stat-label">Done</span>
+            </div>
+            <div class="progress-divider"></div>
+            <div class="progress-stat">
+              <span class="stat-number" id="totalCount">0</span>
+              <span class="stat-label">Total</span>
+            </div>
+            <div class="progress-divider"></div>
+            <div class="progress-stat">
+              <span class="stat-number" id="streakCount">0</span>
+              <span class="stat-label">Streak</span>
+            </div>
+            <div class="progress-divider"></div>
+            <div class="progress-stat">
+              <span class="stat-number" id="overdueCount" style="color:var(--red)">0</span>
+              <span class="stat-label" style="color:var(--red)">Overdue</span>
+            </div>
           </div>
-          <div class="progress-divider"></div>
-          <div class="progress-stat">
-            <span class="stat-number" id="streakCount">0</span>
-            <span class="stat-label">Streak</span>
+        </div>
+
+        <div class="smart-suggestion" id="smartSuggestion" style="display:none;">
+          <i class="fas fa-lightbulb"></i>
+          <span id="suggestionText"></span>
+          <button class="suggestion-action" id="suggestionAction">Add</button>
+        </div>
+      </header>
+
+      <!-- add form -->
+      <section class="add-section">
+        <form id="assignmentForm" autocomplete="off">
+          <div class="form-row-top">
+            <div class="field field-title">
+              <input type="text" id="titleInput" placeholder="Assignment title..." required>
+            </div>
+            <button type="submit" class="btn-add-circle" aria-label="Add"><i class="fas fa-plus"></i></button>
           </div>
-          <div class="progress-divider"></div>
-          <div class="progress-stat">
-            <span class="stat-number" id="overdueCount">0</span>
-            <span class="stat-label" style="color: var(--red)">Overdue</span>
+          <div class="form-row-bottom">
+            <div class="field">
+              <input type="text" id="subjectInput" placeholder="Subject" list="subjectSuggestions" required>
+              <datalist id="subjectSuggestions"></datalist>
+            </div>
+            <div class="field">
+              <input type="date" id="dueDateInput" required>
+            </div>
+            <div class="field">
+              <select id="prioritySelect">
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div class="field field-recurring">
+              <select id="recurringSelect">
+                <option value="none">One-time</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Biweekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
           </div>
+        </form>
+      </section>
+
+      <!-- filters -->
+      <div class="controls-section">
+        <div class="filter-scroll">
+          <button class="filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip" data-filter="today">Today</button>
+          <button class="filter-chip" data-filter="upcoming">Upcoming</button>
+          <button class="filter-chip" data-filter="overdue">Overdue</button>
+          <button class="filter-chip" data-filter="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>
+        </div>
+        <div class="search-sort-row">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search...">
+          </div>
+          <button class="sort-btn" id="sortBtn" title="Sort"><i class="fas fa-arrow-down-a-z"></i></button>
         </div>
       </div>
 
-      <!-- smart suggestion -->
-      <div class="smart-suggestion" id="smartSuggestion" style="display: none;">
-        <i class="fas fa-lightbulb"></i>
-        <span id="suggestionText"></span>
-        <button class="suggestion-action" id="suggestionAction">Add</button>
-      </div>
-    </header>
+      <!-- assignments -->
+      <section class="assignments-list" id="assignmentsList"></section>
 
-    <!-- quick add form -->
-    <section class="add-section">
-      <form id="assignmentForm" autocomplete="off">
-        <div class="form-row-top">
-          <div class="field field-title">
-            <input type="text" id="titleInput" placeholder="Assignment title..." required>
+      <!-- dashboard -->
+      <section class="dashboard-view" id="dashboardView" style="display:none;">
+        <div class="dashboard-grid">
+          <div class="dash-card">
+            <h3 class="dash-card-title">By Subject</h3>
+            <div class="subject-chart" id="subjectChart"></div>
           </div>
-          <button type="submit" class="btn-add-circle" aria-label="Add assignment">
-            <i class="fas fa-plus"></i>
-          </button>
-        </div>
-        <div class="form-row-bottom">
-          <div class="field">
-            <input type="text" id="subjectInput" placeholder="Subject" list="subjectSuggestions" required>
-            <datalist id="subjectSuggestions"></datalist>
+          <div class="dash-card">
+            <h3 class="dash-card-title">This Week</h3>
+            <div class="week-stats" id="weekStats"></div>
           </div>
-          <div class="field">
-            <input type="date" id="dueDateInput" required>
-          </div>
-          <div class="field">
-            <select id="prioritySelect">
-              <option value="normal">Normal</option>
-              <option value="urgent">Urgent</option>
-              <option value="low">Low</option>
-            </select>
+          <div class="dash-card full-width">
+            <h3 class="dash-card-title">Trend</h3>
+            <div class="trend-bars" id="trendBars"></div>
           </div>
         </div>
-      </form>
-    </section>
+      </section>
 
-    <!-- filters, search & sort -->
-    <div class="controls-section">
-      <div class="filter-scroll">
-        <button class="filter-chip active" data-filter="all">All</button>
-        <button class="filter-chip" data-filter="today">Today</button>
-        <button class="filter-chip" data-filter="upcoming">Upcoming</button>
-        <button class="filter-chip" data-filter="overdue">Overdue</button>
-        <button class="filter-chip" data-filter="dashboard" id="dashboardTab">
-          <i class="fas fa-chart-pie"></i> Dashboard
-        </button>
-      </div>
-      <div class="search-sort-row">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" id="searchInput" placeholder="Search...">
-        </div>
-        <button class="sort-btn" id="sortBtn" title="Sort">
-          <i class="fas fa-arrow-down-a-z"></i>
-        </button>
+      <!-- footer -->
+      <div class="footer-action">
+        <button class="btn-text" id="clearCompletedBtn">Clear completed</button>
+        <span class="footer-dot">·</span>
+        <button class="btn-text" id="exportBtn">Export</button>
       </div>
     </div>
 
-    <!-- assignments list -->
-    <section class="assignments-list" id="assignmentsList"></section>
-
-    <!-- dashboard view (hidden by default) -->
-    <section class="dashboard-view" id="dashboardView" style="display: none;">
-      <div class="dashboard-grid">
-        <div class="dash-card">
-          <h3 class="dash-card-title">By Subject</h3>
-          <div class="subject-chart" id="subjectChart"></div>
-        </div>
-        <div class="dash-card">
-          <h3 class="dash-card-title">This Week</h3>
-          <div class="week-stats" id="weekStats"></div>
-        </div>
-        <div class="dash-card full-width">
-          <h3 class="dash-card-title">Completion Trend</h3>
-          <div class="trend-bars" id="trendBars"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- footer -->
-    <div class="footer-action">
-      <button class="btn-text" id="clearCompletedBtn">Clear completed</button>
-      <span class="footer-dot">·</span>
-      <button class="btn-text" id="exportBtn">Export</button>
-    </div>
-
-    <!-- detail modal (hidden) -->
-    <div class="modal-overlay" id="detailModal" style="display: none;">
+    <!-- detail modal -->
+    <div class="modal-overlay" id="detailModal" style="display:none;">
       <div class="modal-card">
         <div class="modal-header">
-          <h3 id="modalTitle">Assignment Details</h3>
+          <h3 id="modalTitle">Details</h3>
           <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-          <div class="modal-field">
-            <label>Title</label>
-            <p id="modalAssignmentTitle"></p>
-          </div>
-          <div class="modal-field">
-            <label>Subject</label>
-            <p id="modalSubject"></p>
-          </div>
-          <div class="modal-field">
-            <label>Due Date</label>
-            <p id="modalDueDate"></p>
-          </div>
-          <div class="modal-field">
-            <label>Priority</label>
-            <p id="modalPriority"></p>
-          </div>
-          <div class="modal-field">
-            <label>Notes</label>
-            <textarea id="modalNotes" placeholder="Add notes..."></textarea>
-          </div>
+          <div class="modal-field"><label>Title</label><p id="modalAssignmentTitle"></p></div>
+          <div class="modal-field"><label>Subject</label><p id="modalSubject"></p></div>
+          <div class="modal-field"><label>Due</label><p id="modalDueDate"></p></div>
+          <div class="modal-field"><label>Priority</label><p id="modalPriority"></p></div>
+          <div class="modal-field"><label>Recurring</label><p id="modalRecurring"></p></div>
+          <div class="modal-field"><label>Notes</label><textarea id="modalNotes" placeholder="Add notes..."></textarea></div>
           <div class="modal-actions">
             <button class="btn-modal btn-delete" id="modalDelete">Delete</button>
-            <button class="btn-modal btn-save" id="modalSave">Save Notes</button>
+            <button class="btn-modal btn-save" id="modalSave">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share modal -->
+    <div class="modal-overlay" id="shareModal" style="display:none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Share List</h3>
+          <button class="modal-close" id="shareModalClose"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.8rem;">Anyone with this link can view your homework list:</p>
+          <div class="share-link-box">
+            <input type="text" id="shareLinkInput" readonly>
+            <button class="btn-modal btn-save" id="copyShareLink">Copy</button>
           </div>
         </div>
       </div>
