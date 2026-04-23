@@ -1,4 +1,4 @@
-// app.js – Homework Tracker v3.0.2 (Fixed check button + clear completed)
+// app.js – Homework Tracker v3.0.3 (Fully Fixed)
 (function() {
   // ========== STATE ==========
   let assignments = [];
@@ -52,10 +52,6 @@
   const CIRCUMFERENCE = 263.89;
   let currentFilter = 'all';
   let searchQuery = '';
-  let swipeStartX = 0;
-  let swipeCurrentX = 0;
-  let swipingCard = null;
-  let isSwiping = false;
 
   const colorPalette = ['#0071e3','#ff3b30','#34c759','#ff9500','#af52de','#5ac8fa','#ffcc00','#ff2d55'];
 
@@ -97,27 +93,30 @@
     setTimeout(() => {
       skeletonLoader.style.display = 'none';
       mainContent.style.display = 'block';
-    }, 500);
+    }, 400);
   }
 
   // ========== CONFETTI ==========
+  let confettiActive = false;
   function launchConfetti() {
+    if (confettiActive) return;
+    confettiActive = true;
     const ctx = confettiCanvas.getContext('2d');
     confettiCanvas.width = window.innerWidth;
     confettiCanvas.height = window.innerHeight;
     const particles = [];
     const colors = ['#ff3b30','#ff9500','#ffcc00','#34c759','#0071e3','#af52de','#5ac8fa'];
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 100; i++) {
       particles.push({
         x: Math.random() * confettiCanvas.width,
-        y: -20,
-        w: Math.random() * 8 + 4,
-        h: Math.random() * 4 + 2,
+        y: -30,
+        w: Math.random() * 10 + 4,
+        h: Math.random() * 5 + 2,
         color: colors[Math.floor(Math.random() * colors.length)],
-        vx: (Math.random() - 0.5) * 6,
-        vy: Math.random() * 3 + 2,
+        vx: (Math.random() - 0.5) * 8,
+        vy: Math.random() * 4 + 3,
         rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 10
+        rotationSpeed: (Math.random() - 0.5) * 12
       });
     }
     function animate() {
@@ -126,8 +125,9 @@
       particles.forEach(p => {
         p.x += p.vx;
         p.y += p.vy;
+        p.vy += 0.05;
         p.rotation += p.rotationSpeed;
-        if (p.y < confettiCanvas.height + 20) allDone = false;
+        if (p.y < confettiCanvas.height + 50) allDone = false;
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation * Math.PI / 180);
@@ -136,6 +136,7 @@
         ctx.restore();
       });
       if (!allDone) requestAnimationFrame(animate);
+      else confettiActive = false;
     }
     animate();
   }
@@ -177,11 +178,11 @@
       const undoBtn = document.createElement('button');
       undoBtn.className = 'undo-btn';
       undoBtn.textContent = 'Undo';
-      undoBtn.addEventListener('click', () => { undoCallback(); toast.remove(); });
+      undoBtn.onclick = () => { undoCallback(); toast.remove(); };
       toast.appendChild(undoBtn);
     }
     toastContainer.appendChild(toast);
-    setTimeout(() => toast.remove(), undoCallback ? 4000 : 3000);
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, undoCallback ? 4000 : 2500);
   }
 
   // ========== HAPTICS & SOUND ==========
@@ -199,12 +200,12 @@
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       if (type === 'complete') {
-        osc.frequency.value = 880;
+        osc.frequency.value = 880; osc.type = 'sine';
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
       } else if (type === 'add') {
-        osc.frequency.value = 660;
+        osc.frequency.value = 660; osc.type = 'sine';
         gain.gain.setValueAtTime(0.1, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
@@ -227,7 +228,10 @@
     totalCountSpan.textContent = total;
     overdueCountSpan.textContent = overdue;
     streakCountEl.textContent = streak;
-    if (total > 0 && completed === total) launchConfetti();
+    // Confetti when all done
+    if (total > 0 && completed === total && total > 0) {
+      setTimeout(launchConfetti, 200);
+    }
   }
   function setCurrentDate() {
     const today = new Date();
@@ -247,15 +251,16 @@
     }
   }
 
-  // ========== SMART SUGGESTIONS ==========
-  function generateSuggestion() {
-    const subjects = [...new Set(assignments.map(a => a.subject.toLowerCase()))];
+  // ========== SMART SUGGESTION ==========
+  function updateSuggestion() {
+    const subjects = [...new Set(assignments.filter(a => !a.completed).map(a => a.subject.toLowerCase()))];
     if (subjects.length === 0) { smartSuggestion.style.display = 'none'; return; }
     const counts = {};
-    assignments.forEach(a => { const k = a.subject.toLowerCase(); counts[k] = (counts[k]||0)+1; });
-    const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0][0];
+    assignments.filter(a => !a.completed).forEach(a => { const k = a.subject.toLowerCase(); counts[k] = (counts[k]||0)+1; });
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    if (sorted.length === 0) { smartSuggestion.style.display = 'none'; return; }
+    const top = sorted[0][0];
     suggestionText.textContent = `You often have ${top} homework. Add one?`;
-    suggestionAction.onclick = () => { subjectInput.value = top; titleInput.focus(); smartSuggestion.style.display = 'none'; };
     smartSuggestion.style.display = 'flex';
   }
 
@@ -284,11 +289,16 @@
 
   // ========== RENDER ==========
   function renderAssignments() {
+    // Process recurring
+    const today = getToday();
     assignments.forEach(a => {
-      if (a.recurring !== 'none' && !a.completed && a.dueDate <= getToday()) {
-        a.dueDate = getNextRecurringDate(a.dueDate, a.recurring);
+      if (a.recurring !== 'none' && !a.completed && a.dueDate < today) {
+        while (a.dueDate < today) {
+          a.dueDate = getNextRecurringDate(a.dueDate, a.recurring);
+        }
       }
     });
+
     const filtered = filterAndSort();
     assignmentsList.innerHTML = '';
     dashboardView.style.display = 'none';
@@ -305,7 +315,6 @@
       card.className = `assignment-card ${a.completed ? 'completed' : ''}`;
       card.dataset.id = a.id;
       card.innerHTML = `
-        <div class="swipe-indicator left"><i class="fas fa-trash"></i></div>
         <div class="assignment-left">
           <div class="priority-indicator ${a.priority==='urgent'?'urgent':a.priority==='low'?'low':''}"></div>
           <div class="assignment-content">
@@ -320,99 +329,32 @@
             </div>
           </div>
         </div>
-        <div class="swipe-indicator right"><i class="fas fa-check"></i></div>
         <button class="check-btn" data-id="${a.id}"><i class="fas fa-check"></i></button>
       `;
+
+      // Card body click → open detail modal
+      card.addEventListener('click', function(e) {
+        // Don't open modal if check button was clicked
+        if (e.target.closest('.check-btn')) return;
+        openDetailModal(a.id);
+      });
 
       assignmentsList.appendChild(card);
     });
 
-    // Attach events AFTER all cards are in the DOM
-    document.querySelectorAll('.assignment-card').forEach(card => {
-      const id = card.dataset.id;
-
-      // Check button - use mousedown to fire before blur/click conflicts
-      const checkBtn = card.querySelector('.check-btn');
-      if (checkBtn) {
-        checkBtn.addEventListener('mousedown', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        });
-        checkBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleComplete(id);
-        });
-      }
-
-      // Card content click → detail modal (but not on check button)
-      const leftSide = card.querySelector('.assignment-left');
-      if (leftSide) {
-        leftSide.addEventListener('click', (e) => {
-          if (isSwiping) return;
-          openDetailModal(id);
-        });
-      }
-
-      // Swipe events
-      card.addEventListener('touchstart', handleSwipeStart, {passive: true});
-      card.addEventListener('touchmove', handleSwipeMove, {passive: false});
-      card.addEventListener('touchend', handleSwipeEnd);
-      card.addEventListener('mousedown', handleSwipeStart);
+    // Attach check button events separately (using onclick for reliability)
+    document.querySelectorAll('.check-btn').forEach(btn => {
+      btn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = this.dataset.id;
+        toggleComplete(id);
+        return false;
+      };
     });
-
-    window.addEventListener('mousemove', handleSwipeMove);
-    window.addEventListener('mouseup', handleSwipeEnd);
 
     updateStats();
     updateSubjectDatalist();
-  }
-
-  // ========== SWIPE ==========
-  function handleSwipeStart(e) {
-    if (e.type === 'mousedown' && e.button !== 0) return;
-    if (e.target.closest('.check-btn')) return;
-    swipingCard = e.target.closest('.assignment-card');
-    if (!swipingCard) return;
-    swipeStartX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-    swipeCurrentX = swipeStartX;
-    isSwiping = false;
-  }
-  function handleSwipeMove(e) {
-    if (!swipingCard) return;
-    const clientX = e.type.includes('mouse') ? e.clientX : (e.touches?.[0]?.clientX || swipeCurrentX);
-    swipeCurrentX = clientX;
-    const deltaX = swipeCurrentX - swipeStartX;
-    if (Math.abs(deltaX) > 5) {
-      isSwiping = true;
-      if (e.cancelable) e.preventDefault();
-      swipingCard.classList.add('swiping');
-      swipingCard.style.transform = `translateX(${deltaX}px)`;
-      const ri = swipingCard.querySelector('.swipe-indicator.right');
-      const li = swipingCard.querySelector('.swipe-indicator.left');
-      if (ri) ri.style.opacity = deltaX > 40 ? Math.min(deltaX/80, 1) : 0;
-      if (li) li.style.opacity = deltaX < -40 ? Math.min(Math.abs(deltaX)/80, 1) : 0;
-    }
-  }
-  function handleSwipeEnd() {
-    if (!swipingCard) return;
-    const deltaX = swipeCurrentX - swipeStartX;
-    swipingCard.classList.remove('swiping');
-    swipingCard.style.transform = '';
-    const ri = swipingCard.querySelector('.swipe-indicator.right');
-    const li = swipingCard.querySelector('.swipe-indicator.left');
-    if (ri) ri.style.opacity = 0;
-    if (li) li.style.opacity = 0;
-    const id = swipingCard.dataset.id;
-    if (deltaX > 80 && id) {
-      swipingCard.classList.add('swiped-right');
-      setTimeout(() => toggleComplete(id), 300);
-    } else if (deltaX < -80 && id) {
-      swipingCard.classList.add('swiped-left');
-      setTimeout(() => deleteAssignment(id), 300);
-    }
-    swipingCard = null;
-    isSwiping = false;
   }
 
   // ========== MODAL ==========
@@ -432,28 +374,46 @@
 
   // ========== ACTIONS ==========
   function addAssignment(subject, title, dueDate, priority, recurring) {
-    assignments.push({
+    const newAssignment = {
       id: Date.now().toString() + Math.random().toString(36).substr(2,5),
-      subject: subject.trim(), title: title.trim(),
-      dueDate, priority, recurring: recurring || 'none',
-      completed: false, notes: ''
-    });
-    renderAssignments(); saveAll(); generateSuggestion();
-    playSound('add'); haptic('light');
+      subject: subject.trim(),
+      title: title.trim(),
+      dueDate,
+      priority,
+      recurring: recurring || 'none',
+      completed: false,
+      notes: ''
+    };
+    assignments.push(newAssignment);
+    renderAssignments();
+    saveAll();
+    updateSuggestion();
+    playSound('add');
+    haptic('light');
     showToast('Assignment added ✓');
   }
 
   function toggleComplete(id) {
     const a = assignments.find(x => x.id === id);
     if (!a) return;
+    const wasCompleted = a.completed;
     a.completed = !a.completed;
-    if (a.completed) {
+    if (a.completed && !wasCompleted) {
       const today = getToday();
-      if (lastCompletedDate !== today) { lastCompletedDate = today; streak = Math.min(streak+1, 365); }
-      playSound('complete'); haptic('success');
-      showToast('Completed! 🎉', () => { a.completed = false; renderAssignments(); saveAll(); });
+      if (lastCompletedDate !== today) {
+        lastCompletedDate = today;
+        streak = Math.min(streak + 1, 365);
+      }
+      playSound('complete');
+      haptic('success');
+      showToast('Completed! 🎉', () => {
+        a.completed = false;
+        renderAssignments();
+        saveAll();
+      });
     }
-    renderAssignments(); saveAll();
+    renderAssignments();
+    saveAll();
   }
 
   function deleteAssignment(id) {
@@ -461,23 +421,29 @@
     if (!a) return;
     const copy = {...a};
     assignments = assignments.filter(x => x.id !== id);
-    renderAssignments(); saveAll();
+    renderAssignments();
+    saveAll();
     haptic('delete');
-    showToast('Deleted', () => { assignments.push(copy); renderAssignments(); saveAll(); });
+    showToast('Deleted', () => {
+      assignments.push(copy);
+      renderAssignments();
+      saveAll();
+    });
   }
 
   function clearCompleted() {
-    const hasCompleted = assignments.some(a => a.completed);
-    if (!hasCompleted) {
-      showToast('No completed assignments to clear');
+    const completedItems = assignments.filter(a => a.completed);
+    if (completedItems.length === 0) {
+      showToast('No completed items to clear');
       return;
     }
-    const completedItems = assignments.filter(a => a.completed);
     assignments = assignments.filter(a => !a.completed);
-    renderAssignments(); saveAll();
-    showToast(`Cleared ${completedItems.length} completed`, () => {
+    renderAssignments();
+    saveAll();
+    showToast(`Cleared ${completedItems.length} item${completedItems.length>1?'s':''}`, () => {
       assignments.push(...completedItems);
-      renderAssignments(); saveAll();
+      renderAssignments();
+      saveAll();
     });
   }
 
@@ -498,8 +464,7 @@
       const data = JSON.parse(decodeURIComponent(atob(shared)));
       if (data.assignments && Array.isArray(data.assignments)) {
         assignments = data.assignments.map((a, i) => ({
-          ...a,
-          id: `shared-${i}-${Date.now()}`,
+          ...a, id: `shared-${i}-${Date.now()}`,
           priority: 'normal', recurring: 'none', notes: '', completed: false
         }));
         saveAll(); renderAssignments();
@@ -514,7 +479,6 @@
     $('#shareLinkInput').value = generateShareLink();
     shareModal.style.display = 'flex';
   }
-
   function exportData() {
     const data = { assignments, streak, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
@@ -537,7 +501,7 @@
     streak = parseInt(localStorage.getItem('hwStreak')) || 0;
     lastCompletedDate = localStorage.getItem('hwLastDate') || null;
     sortOrder = localStorage.getItem('hwSort') || 'date-asc';
-    try { const c = localStorage.getItem('hwSubjectColors'); if (c) subjectColorMap = JSON.parse(c); } catch(e) { subjectColorMap = {}; }
+    try { const c = localStorage.getItem('hwSubjectColors'); if (c) subjectColorMap = JSON.parse(c); } catch(e) {}
   }
   function updateSubjectDatalist() {
     const subjects = [...new Set(assignments.map(a => a.subject))];
@@ -600,17 +564,21 @@
     sortBtn.querySelector('i').className = `fas ${icons[(idx+1)%orders.length]}`;
     localStorage.setItem('hwSort', sortOrder);
     renderAssignments();
+    showToast(`Sorted: ${sortOrder.replace('-',' ')}`);
   }
 
   // ========== EVENT LISTENERS ==========
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', function(e) {
     e.preventDefault();
     const subject = subjectInput.value.trim();
     const title = titleInput.value.trim();
     const dueDate = dueDateInput.value;
     const priority = prioritySelect.value;
     const recurring = recurringSelect.value;
-    if (!subject || !title || !dueDate) return;
+    if (!subject || !title || !dueDate) {
+      showToast('Please fill in all fields');
+      return;
+    }
     addAssignment(subject, title, dueDate, priority, recurring);
     form.reset();
     prioritySelect.value = 'normal';
@@ -618,40 +586,88 @@
     dueDateInput.value = getToday();
   });
 
-  filterChips.forEach(chip => chip.addEventListener('click', () => setFilter(chip.dataset.filter)));
-  searchInput.addEventListener('input', e => { searchQuery = e.target.value; renderAssignments(); });
+  // Suggestion "Add" button
+  suggestionAction.addEventListener('click', function() {
+    const text = suggestionText.textContent;
+    const match = text.match(/You often have (\w+) homework/);
+    if (match) {
+      subjectInput.value = match[1];
+      titleInput.focus();
+      smartSuggestion.style.display = 'none';
+    }
+  });
+
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', function() {
+      setFilter(this.dataset.filter);
+    });
+  });
+
+  searchInput.addEventListener('input', function() {
+    searchQuery = this.value;
+    renderAssignments();
+  });
+
   themeToggle.addEventListener('click', toggleTheme);
   sortBtn.addEventListener('click', cycleSort);
   exportBtn.addEventListener('click', exportData);
   shareBtn.addEventListener('click', openShareModal);
 
-  // FIXED: Clear completed with direct event listener
-  clearCompletedBtn.addEventListener('click', (e) => {
+  // Clear completed - direct onclick for reliability
+  clearCompletedBtn.onclick = function(e) {
     e.preventDefault();
     clearCompleted();
-  });
+    return false;
+  };
 
+  // Modal events
   $('#modalClose').addEventListener('click', closeModal);
-  detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeModal(); });
-  $('#modalSave').addEventListener('click', () => {
+  detailModal.addEventListener('click', function(e) {
+    if (e.target === detailModal) closeModal();
+  });
+  $('#modalSave').addEventListener('click', function() {
     if (!currentModalId) return;
     const a = assignments.find(x => x.id === currentModalId);
-    if (a) { a.notes = $('#modalNotes').value; saveAll(); showToast('Notes saved'); haptic('success'); }
+    if (a) {
+      a.notes = $('#modalNotes').value;
+      saveAll();
+      showToast('Notes saved ✓');
+      haptic('success');
+    }
   });
-  $('#modalDelete').addEventListener('click', () => {
+  $('#modalDelete').addEventListener('click', function() {
     if (!currentModalId) return;
     deleteAssignment(currentModalId);
     closeModal();
   });
-  $('#shareModalClose').addEventListener('click', () => shareModal.style.display = 'none');
-  shareModal.addEventListener('click', (e) => { if (e.target === shareModal) shareModal.style.display = 'none'; });
-  $('#copyShareLink').addEventListener('click', () => {
-    navigator.clipboard.writeText($('#shareLinkInput').value).then(() => showToast('Link copied!'));
+
+  // Share modal
+  $('#shareModalClose').addEventListener('click', function() {
+    shareModal.style.display = 'none';
+  });
+  shareModal.addEventListener('click', function(e) {
+    if (e.target === shareModal) shareModal.style.display = 'none';
+  });
+  $('#copyShareLink').addEventListener('click', function() {
+    const input = $('#shareLinkInput');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => showToast('Link copied! 📋'));
   });
 
-  document.addEventListener('keydown', e => {
-    if ((e.metaKey||e.ctrlKey) && e.key === 'k') { e.preventDefault(); searchInput.focus(); }
-    if (e.key === 'Escape') { closeModal(); shareModal.style.display = 'none'; searchInput.blur(); }
+  // Keyboard shortcuts
+  document.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      searchInput.focus();
+    }
+    if (e.key === 'Escape') {
+      closeModal();
+      shareModal.style.display = 'none';
+    }
+    if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement === document.body) {
+      e.preventDefault();
+      titleInput.focus();
+    }
   });
 
   // ========== NOTIFICATIONS ==========
@@ -660,11 +676,13 @@
     const tomorrowStr = addDays(getToday(), 1);
     const dueTomorrow = assignments.filter(a => !a.completed && a.dueDate === tomorrowStr);
     if (dueTomorrow.length > 0) {
-      new Notification('📚 Homework due tomorrow', { body: `${dueTomorrow.length} assignment${dueTomorrow.length>1?'s':''} due tomorrow` });
+      new Notification('📚 Homework due tomorrow', {
+        body: `${dueTomorrow.length} assignment${dueTomorrow.length>1?'s':''} due tomorrow — stay ahead!`
+      });
     }
   }
   if ('Notification' in window && Notification.permission === 'default') {
-    setTimeout(() => Notification.requestPermission(), 5000);
+    setTimeout(() => Notification.requestPermission(), 3000);
   }
 
   // ========== INIT ==========
@@ -676,9 +694,11 @@
     sortBtn.querySelector('i').className = 'fas fa-arrow-down-a-z';
     showSkeleton();
     setTimeout(() => {
-      if (!loadSharedData()) renderAssignments();
-      generateSuggestion();
-    }, 550);
+      if (!loadSharedData()) {
+        renderAssignments();
+      }
+      updateSuggestion();
+    }, 450);
     setInterval(checkDueReminders, 3600000);
     checkDueReminders();
   }
