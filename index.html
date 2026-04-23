@@ -14,7 +14,7 @@
 <body>
   <div class="toast-container" id="toastContainer"></div>
   <canvas id="confettiCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
-  <div class="shortcut-hint" id="shortcutHint">Press <kbd>N</kbd> to add · <kbd>Ctrl+K</kbd> to search</div>
+  <div class="shortcut-hint" id="shortcutHint">Press <kbd>N</kbd> to add · <kbd>Ctrl+K</kbd> to search · <kbd>Ctrl+Z</kbd> to undo</div>
 
   <div class="container">
     <div class="skeleton-loader" id="skeletonLoader">
@@ -28,7 +28,7 @@
       <header class="header">
         <div class="header-top">
           <div class="logo-group">
-            <div class="logo-mark"><i class="fas fa-graduation-cap"></i></div>
+            <div class="logo-mark" id="logoMark" title="Double-click to customize subject colors"><i class="fas fa-graduation-cap"></i></div>
             <div><h1 class="logo">Homework</h1><p class="logo-subtitle" id="greetingSubtitle">Stay on top of it.</p></div>
           </div>
           <div class="header-actions">
@@ -79,7 +79,7 @@
             <div class="field"><input type="date" id="dueDateInput" required></div>
             <div class="field"><select id="prioritySelect"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
             <div class="field"><select id="recurringSelect"><option value="none">One-time</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="biweekly">Biweekly</option><option value="monthly">Monthly</option></select></div>
-            <div class="field field-estimate"><input type="number" id="estimateInput" placeholder="Min" min="1" max="480"></div>
+            <div class="field"><input type="number" id="estimateInput" placeholder="Minutes" min="1" max="480"></div>
           </div>
         </form>
         <button class="btn-paste" id="pasteSyllabusBtn"><i class="fas fa-paste"></i> Paste syllabus</button>
@@ -97,7 +97,7 @@
         <div class="search-sort-row">
           <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search..."></div>
           <button class="sort-btn" id="sortBtn" title="Sort"><i class="fas fa-arrow-down-a-z"></i></button>
-          <button class="sort-btn" id="bulkSelectBtn" title="Select"><i class="fas fa-check-double"></i></button>
+          <button class="sort-btn" id="bulkSelectBtn" title="Bulk select"><i class="fas fa-check-double"></i></button>
         </div>
       </div>
 
@@ -115,7 +115,7 @@
         <button class="btn-text" id="clearCompletedBtn">Clear completed</button>
         <span class="footer-dot">·</span>
         <button class="btn-text" id="exportBtn">Export</button>
-        <span class="footer-dot">·</span>
+        <span class="footer-dot" id="bulkDeleteDot" style="display:none;">·</span>
         <button class="btn-text" id="bulkDeleteBtn" style="display:none;">Delete selected</button>
       </div>
     </div>
