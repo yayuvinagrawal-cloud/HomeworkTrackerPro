@@ -326,4 +326,82 @@
 
   function openSubjectColorModal(){
     const subjects=[...new Set(assignments.map(a=>a.subject))];
-    $('#subjectColorList').inner
+    $('#subjectColorList').innerHTML=subjects.map(s=>`<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;"><span style="width:20px;height:20px;border-radius:50%;background:${getSubjectColor(s)}"></span><span style="flex:1;font-size:0.82rem;">${esc(s)}</span><input type="color" value="${getSubjectColor(s)}" data-subject="${esc(s.toLowerCase())}" style="width:30px;height:30px;border:none;cursor:pointer;"></div>`).join('');
+    document.querySelectorAll('#subjectColorList input[type=color]').forEach(i=>{i.addEventListener('change',function(){subjectColorMap[this.dataset.subject]=this.value;renderAssignments();saveAll();});});
+    subjectColorModal.style.display='flex';
+  }
+
+  function saveAll(){
+    localStorage.setItem('hwData',JSON.stringify(assignments));localStorage.setItem('hwArchive',JSON.stringify(archivedAssignments));
+    localStorage.setItem('hwStreak',streak);localStorage.setItem('hwLastDate',lastCompletedDate||'');
+    localStorage.setItem('hwSubjectColors',JSON.stringify(subjectColorMap));localStorage.setItem('hwSort',sortOrder);localStorage.setItem('hwSound',soundEnabled);
+  }
+  function loadAll(){
+    try{const d=localStorage.getItem('hwData');if(d)assignments=JSON.parse(d);}catch(e){}
+    try{const a=localStorage.getItem('hwArchive');if(a)archivedAssignments=JSON.parse(a);}catch(e){}
+    streak=parseInt(localStorage.getItem('hwStreak'))||0;lastCompletedDate=localStorage.getItem('hwLastDate')||null;
+    sortOrder=localStorage.getItem('hwSort')||'date-asc';
+    try{const c=localStorage.getItem('hwSubjectColors');if(c)subjectColorMap=JSON.parse(c);}catch(e){}
+    soundEnabled=localStorage.getItem('hwSound')!=='false';
+    if(!soundEnabled)soundToggleBtn.innerHTML='<i class="fas fa-volume-xmark"></i>';
+  }
+  function updateSubjectDatalist(){subjectSuggestions.innerHTML=[...new Set(assignments.map(a=>a.subject))].map(s=>`<option value="${esc(s)}">`).join('');}
+
+  function renderDashboard(){
+    assignmentsList.style.display='none';archiveView.style.display='none';dashboardView.style.display='block';updateStats();
+    const counts={};assignments.forEach(a=>{const k=a.subject.toLowerCase();if(!counts[k])counts[k]={subject:a.subject,count:0,completed:0};counts[k].count++;if(a.completed)counts[k].completed++;});
+    const entries=Object.values(counts).sort((a,b)=>b.count-a.count),max=entries[0]?.count||1;
+    subjectChart.innerHTML=entries.map(e=>`<div class="subject-row"><div class="subject-dot" style="background:${getSubjectColor(e.subject)}"></div><span style="flex:1;font-size:0.7rem;color:var(--text-primary)">${esc(e.subject)}</span><span style="font-size:0.65rem;color:var(--text-secondary)">${e.completed}/${e.count}</span><div class="subject-bar-container" style="width:40%"><div class="subject-bar" style="width:${(e.count/max)*100}%;background:${getSubjectColor(e.subject)}"></div></div></div>`).join('')||'<p style="font-size:0.7rem;color:var(--text-secondary)">No data</p>';
+    const today=new Date(),ws=new Date(today);ws.setDate(today.getDate()-today.getDay());const we=new Date(ws);we.setDate(ws.getDate()+6);
+    const wa=assignments.filter(a=>{const d=new Date(a.dueDate+'T00:00:00');return d>=ws&&d<=we;}),wc=wa.filter(a=>a.completed).length;
+    weekStats.innerHTML=`<div class="week-stat-row"><span>Due this week</span><span>${wa.length}</span></div><div class="week-stat-row"><span>Completed</span><span>${wc}</span></div><div class="week-stat-row"><span>Remaining</span><span>${wa.length-wc}</span></div><div class="week-stat-row"><span>Overdue</span><span style="color:var(--red)">${assignments.filter(a=>!a.completed&&isOverdue(a.dueDate)).length}</span></div>`;
+    const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
+    const todayStr=getToday(),data=days.map(day=>({total:assignments.filter(a=>a.dueDate===day).length,label:new Date(day+'T00:00:00').toLocaleDateString('en-US',{weekday:'short'}),isToday:day===todayStr})),mt=Math.max(...data.map(d=>d.total),1);
+    trendBars.innerHTML=data.map(d=>`<div class="trend-bar-wrapper"><div class="trend-bar ${d.isToday?'today':''}" style="height:${(d.total/mt)*50}px;background:${d.total>0?(d.isToday?'var(--accent)':'var(--accent)'):'var(--border)'}"></div><span class="trend-label ${d.isToday?'today':''}">${d.label}</span></div>`).join('');
+  }
+
+  function setFilter(fv){currentFilter=fv;filterChips.forEach(c=>c.classList.toggle('active',c.dataset.filter===fv));if(fv==='archive'||fv==='dashboard'){searchInput.value='';searchQuery='';}renderAssignments();}
+  function cycleSort(){const orders=['date-asc','date-desc','subject','title','priority'],icons=['fa-arrow-down-a-z','fa-arrow-up-a-z','fa-font','fa-heading','fa-flag'],idx=orders.indexOf(sortOrder);sortOrder=orders[(idx+1)%orders.length];sortBtn.querySelector('i').className=`fas ${icons[(idx+1)%orders.length]}`;localStorage.setItem('hwSort',sortOrder);renderAssignments();showToast(`Sorted: ${sortOrder.replace('-',' ')}`);}
+
+  // ========== EVENT LISTENERS ==========
+  form.addEventListener('submit',function(e){e.preventDefault();const s=subjectInput.value.trim(),t=titleInput.value.trim(),dd=dueDateInput.value,p=prioritySelect.value,r=recurringSelect.value,est=parseInt(estimateInput.value)||0;if(!s||!t||!dd){showToast('Fill in all fields');return;}addAssignment(s,t,dd,p,r,est);form.reset();prioritySelect.value='normal';recurringSelect.value='none';estimateInput.value='';dueDateInput.value=getToday();});
+  filterChips.forEach(c=>c.addEventListener('click',function(){setFilter(this.dataset.filter);}));
+  searchInput.addEventListener('input',function(){searchQuery=this.value;renderAssignments();});
+  themeToggle.addEventListener('click',toggleTheme);
+  sortBtn.addEventListener('click',cycleSort);
+  exportBtn.addEventListener('click',exportData);
+  shareBtn.addEventListener('click',()=>{$('#shareLinkInput').value=generateShareLink();shareModal.style.display='flex';});
+  pasteSyllabusBtn.addEventListener('click',()=>{pasteModal.style.display='flex';});
+  focusModeBtn.addEventListener('click',()=>{focusMode=!focusMode;focusModeBtn.classList.toggle('active',focusMode);renderAssignments();showToast(focusMode?'Focus mode on':'Focus mode off');});
+  soundToggleBtn.addEventListener('click',()=>{soundEnabled=!soundEnabled;soundToggleBtn.innerHTML=soundEnabled?'<i class="fas fa-volume-high"></i>':'<i class="fas fa-volume-xmark"></i>';localStorage.setItem('hwSound',soundEnabled);showToast(soundEnabled?'Sound on':'Sound muted');});
+  bulkSelectBtn.addEventListener('click',toggleBulkMode);
+  bulkDeleteBtn.addEventListener('click',bulkDelete);
+  clearCompletedBtn.onclick=function(e){e.preventDefault();clearCompleted();return false;};
+  $('#modalClose').addEventListener('click',closeModal);
+  detailModal.addEventListener('click',function(e){if(e.target===detailModal)closeModal();});
+  $('#modalSave').addEventListener('click',function(){if(!currentModalId)return;const a=assignments.find(x=>x.id===currentModalId);if(a){a.notes=$('#modalNotes').value;saveAll();showToast('Notes saved ✓');haptic('success');}});
+  $('#modalDelete').addEventListener('click',function(){if(!currentModalId)return;deleteAssignment(currentModalId);closeModal();});
+  $('#shareModalClose').addEventListener('click',()=>shareModal.style.display='none');
+  shareModal.addEventListener('click',function(e){if(e.target===shareModal)shareModal.style.display='none';});
+  $('#copyShareLink').addEventListener('click',()=>{const i=$('#shareLinkInput');i.select();navigator.clipboard.writeText(i.value).then(()=>showToast('Link copied!'));});
+  $('#pasteModalClose').addEventListener('click',()=>pasteModal.style.display='none');
+  pasteModal.addEventListener('click',function(e){if(e.target===pasteModal)pasteModal.style.display='none';});
+  $('#pasteExtractBtn').addEventListener('click',pasteSyllabus);
+  $('#subjectColorClose').addEventListener('click',()=>subjectColorModal.style.display='none');
+  subjectColorModal.addEventListener('click',function(e){if(e.target===subjectColorModal)subjectColorModal.style.display='none';});
+  logoMark.addEventListener('dblclick',openSubjectColorModal);
+  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();searchInput.focus();}if((e.metaKey||e.ctrlKey)&&e.key==='z'){e.preventDefault();if(undoLast())showToast('Undo ✓');}if(e.key==='Escape'){closeModal();shareModal.style.display='none';pasteModal.style.display='none';subjectColorModal.style.display='none';if(bulkSelectMode)toggleBulkMode();}if(e.key==='n'&&!e.ctrlKey&&!e.metaKey&&document.activeElement===document.body){e.preventDefault();titleInput.focus();}});
+  setTimeout(()=>{shortcutHint.style.opacity='0';setTimeout(()=>shortcutHint.remove(),500);},10000);
+
+  function checkDueReminders(){if(!('Notification'in window)||Notification.permission!=='granted')return;const ts=addDays(getToday(),1),dt=assignments.filter(a=>!a.completed&&a.dueDate===ts);if(dt.length>0)new Notification('📚 Homework due tomorrow',{body:`${dt.length} assignment${dt.length>1?'s':''} due tomorrow`});}
+  if('Notification'in window&&Notification.permission==='default')setTimeout(()=>Notification.requestPermission(),3000);
+
+  function init(){
+    loadTheme();setCurrentDate();loadAll();dueDateInput.value=getToday();sortBtn.querySelector('i').className='fas fa-arrow-down-a-z';
+    if(!soundEnabled)soundToggleBtn.innerHTML='<i class="fas fa-volume-xmark"></i>';
+    showSkeleton();
+    setTimeout(()=>{if(!loadSharedData())renderAssignments();updateSuggestion();},450);
+    setInterval(checkDueReminders,3600000);checkDueReminders();
+  }
+  init();
+})();
