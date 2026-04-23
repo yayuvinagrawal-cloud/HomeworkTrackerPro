@@ -2,27 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>Homework Tracker • flow</title>
-  <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Google Font Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <!-- Our styles -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
-    <!-- header with progress -->
+    <!-- header -->
     <header class="header">
       <div class="header-top">
         <h1 class="logo">
           <span class="logo-icon"><i class="fas fa-graduation-cap"></i></span>
           homework<span class="logo-dot">.</span>flow
         </h1>
-        <div class="date-badge" id="currentDate"></div>
+        <div class="header-actions">
+          <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <i class="fas fa-moon"></i>
+          </button>
+          <div class="date-badge" id="currentDate"></div>
+        </div>
       </div>
       <div class="progress-section">
         <div class="progress-text">
@@ -31,6 +33,17 @@
         </div>
         <div class="progress-bar-container">
           <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+        </div>
+      </div>
+      <!-- streak & motivation -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-badge">
+          <i class="fas fa-fire"></i>
+          <span id="streakCount">0</span> day streak
+        </div>
+        <div class="stat-badge" id="motivationBadge">
+          <i class="fas fa-star"></i>
+          <span id="motivationText">Let's get started!</span>
         </div>
       </div>
     </header>
@@ -66,17 +79,22 @@
       </form>
     </section>
 
-    <!-- filter tabs -->
-    <div class="filters">
-      <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="today">Due today</button>
-      <button class="filter-btn" data-filter="upcoming">Upcoming</button>
-      <button class="filter-btn" data-filter="overdue">Overdue</button>
+    <!-- filter tabs + search -->
+    <div class="controls-row">
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="today">Today</button>
+        <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+        <button class="filter-btn" data-filter="overdue">Overdue</button>
+      </div>
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search..." class="search-input">
+      </div>
     </div>
 
     <!-- assignments list -->
     <section class="assignments-list" id="assignmentsList">
-      <!-- dynamically populated by app.js -->
       <div class="empty-state" id="emptyState">
         <div class="empty-icon"><i class="far fa-clipboard"></i></div>
         <p>No assignments yet</p>
@@ -84,12 +102,18 @@
       </div>
     </section>
 
+    <!-- clear completed button -->
+    <div class="actions-footer">
+      <button class="btn-clear" id="clearCompletedBtn">
+        <i class="fas fa-check-double"></i> Clear completed
+      </button>
+    </div>
+
     <footer class="footer">
       <p>tap to complete • made for focus</p>
     </footer>
   </div>
 
-  <!-- our main JavaScript -->
   <script src="app.js"></script>
 </body>
 </html>
