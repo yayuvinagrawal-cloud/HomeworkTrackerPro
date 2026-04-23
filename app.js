@@ -218,19 +218,29 @@
     progressRing.style.strokeDashoffset = CIRCUMFERENCE - (percent/100) * CIRCUMFERENCE;
     progressPercent.textContent = `${Math.round(percent)}%`;
   }
+   let confettiFiredForThisSet = false;
+
   function updateStats() {
     const total = assignments.length;
     const completed = assignments.filter(a => a.completed).length;
     const overdue = assignments.filter(a => !a.completed && isOverdue(a.dueDate)).length;
     const percent = total === 0 ? 0 : (completed/total)*100;
+    
     updateProgressRing(percent);
     completedCountSpan.textContent = completed;
     totalCountSpan.textContent = total;
     overdueCountSpan.textContent = overdue;
     streakCountEl.textContent = streak;
-    // Confetti when all done
-    if (total > 0 && completed === total && total > 0) {
+    
+    // Only fire confetti when ALL are done AND we haven't fired yet for this set
+    if (total > 0 && completed === total && !confettiFiredForThisSet) {
+      confettiFiredForThisSet = true;
       setTimeout(launchConfetti, 200);
+    }
+    
+    // Reset the flag when not all are completed
+    if (completed < total) {
+      confettiFiredForThisSet = false;
     }
   }
   function setCurrentDate() {
@@ -412,11 +422,17 @@
     showToast('Assignment added ✓');
   }
 
-  function toggleComplete(id) {
+   function toggleComplete(id) {
     const a = assignments.find(x => x.id === id);
     if (!a) return;
     const wasCompleted = a.completed;
     a.completed = !a.completed;
+    
+    // Reset confetti flag when uncompleting something
+    if (!a.completed && wasCompleted) {
+      confettiFiredForThisSet = false;
+    }
+    
     if (a.completed && !wasCompleted) {
       const today = getToday();
       if (lastCompletedDate !== today) {
@@ -427,6 +443,7 @@
       haptic('success');
       showToast('Completed! 🎉', () => {
         a.completed = false;
+        confettiFiredForThisSet = false;
         renderAssignments();
         saveAll();
       });
@@ -450,13 +467,14 @@
     });
   }
 
-  function clearCompleted() {
+    function clearCompleted() {
     const completedItems = assignments.filter(a => a.completed);
     if (completedItems.length === 0) {
       showToast('No completed items to clear');
       return;
     }
     assignments = assignments.filter(a => !a.completed);
+    confettiFiredForThisSet = false; // Reset confetti flag
     renderAssignments();
     saveAll();
     showToast(`Cleared ${completedItems.length} item${completedItems.length>1?'s':''}`, () => {
@@ -465,7 +483,6 @@
       saveAll();
     });
   }
-
   // ========== SHARE ==========
   function generateShareLink() {
     const data = {
