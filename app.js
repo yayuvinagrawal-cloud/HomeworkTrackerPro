@@ -271,6 +271,16 @@
     const top = sorted[0][0];
     suggestionText.textContent = `You often have ${top} homework. Add one?`;
     smartSuggestion.style.display = 'flex';
+    
+    // RE-BIND the click every time we update
+    suggestionAction.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      subjectInput.value = top;
+      titleInput.focus();
+      smartSuggestion.style.display = 'none';
+      return false;
+    };
   }
 
   // ========== FILTER & SORT ==========
@@ -595,22 +605,7 @@
     dueDateInput.value = getToday();
   });
 
-  // Suggestion "Add" button — fixed with onclick for reliability
-  suggestionAction.onclick = function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const text = suggestionText.textContent;
-    // Extract subject from "You often have X homework. Add one?"
-    const words = text.split(' ');
-    const subjectWord = words[3]; // "ck12" or whatever subject
-    if (subjectWord) {
-      subjectInput.value = subjectWord;
-      titleInput.focus();
-      smartSuggestion.style.display = 'none';
-    }
-    return false;
-  };
-
+  
   filterChips.forEach(chip => {
     chip.addEventListener('click', function() {
       setFilter(this.dataset.filter);
