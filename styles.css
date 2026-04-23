@@ -88,9 +88,10 @@ body {
 #assignmentForm { display:flex; flex-direction:column; gap:0.5rem; }
 .form-row-top { display:flex; gap:0.6rem; align-items:center; }
 .form-row-bottom { display:flex; gap:0.5rem; flex-wrap:wrap; }
-.field { flex:1; min-width:80px; }
-.field input,.field select { width:100%; background:var(--surface-secondary); border:1px solid var(--border); color:var(--text-primary); padding:0.6rem 0.8rem; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:0.82rem; outline:none; transition:all var(--transition); }
-.field input::placeholder { color:var(--text-tertiary); }
+.field { flex:1; min-width:90px; }
+.field input[type="date"] { min-width:120px; }
+.field-estimate { max-width:65px; flex:0 0 65px; }.field { flex:1; min-width:80px; }
+.field input,.field select { width:100%; background:var(--surface-secondary); border:1px solid var(--border); color:var(--text-primary); padding:0.6rem 0.7rem; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:0.8rem; outline:none; transition:all var(--transition); }.field input::placeholder { color:var(--text-tertiary); }
 .field input:focus,.field select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,113,227,0.12); background:var(--surface); }
 .field select { cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; padding-right:28px; }
 .field-estimate { max-width:70px; }
