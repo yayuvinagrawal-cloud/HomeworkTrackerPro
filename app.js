@@ -1,6 +1,4 @@
-// app.js – Homework Tracker v3.0.1 (Fixed check button)
-// Confetti + Swipe + Undo + Skeleton + Recurring + Share + all previous features
-
+// app.js – Homework Tracker v3.0.2 (Fixed check button + clear completed)
 (function() {
   // ========== STATE ==========
   let assignments = [];
@@ -9,7 +7,6 @@
   let subjectColorMap = {};
   let sortOrder = 'date-asc';
   let currentModalId = null;
-  let undoStack = [];
 
   // ========== DOM ==========
   const $ = (s) => document.querySelector(s);
@@ -93,14 +90,14 @@
   function isToday(d) { return d === getToday(); }
   function esc(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-  // ========== SKELETON LOADING ==========
+  // ========== SKELETON ==========
   function showSkeleton() {
     skeletonLoader.style.display = 'flex';
     mainContent.style.display = 'none';
     setTimeout(() => {
       skeletonLoader.style.display = 'none';
       mainContent.style.display = 'block';
-    }, 600);
+    }, 500);
   }
 
   // ========== CONFETTI ==========
@@ -110,11 +107,10 @@
     confettiCanvas.height = window.innerHeight;
     const particles = [];
     const colors = ['#ff3b30','#ff9500','#ffcc00','#34c759','#0071e3','#af52de','#5ac8fa'];
-
     for (let i = 0; i < 80; i++) {
       particles.push({
         x: Math.random() * confettiCanvas.width,
-        y: Math.random() * confettiCanvas.height * -1,
+        y: -20,
         w: Math.random() * 8 + 4,
         h: Math.random() * 4 + 2,
         color: colors[Math.floor(Math.random() * colors.length)],
@@ -124,7 +120,6 @@
         rotationSpeed: (Math.random() - 0.5) * 10
       });
     }
-
     function animate() {
       ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
       let allDone = true;
@@ -149,7 +144,6 @@
   function getSystemTheme() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-
   function applyTheme(theme) {
     if (theme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -159,12 +153,10 @@
       themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
     }
   }
-
   function loadTheme() {
     const saved = localStorage.getItem('hwTheme');
     applyTheme(saved || getSystemTheme());
   }
-
   function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     const next = current === 'dark' ? 'light' : 'dark';
@@ -172,12 +164,11 @@
     applyTheme(next);
     showToast(`Switched to ${next} mode`);
   }
-
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (!localStorage.getItem('hwTheme')) applyTheme(getSystemTheme());
   });
 
-  // ========== TOAST + UNDO ==========
+  // ========== TOAST ==========
   function showToast(msg, undoCallback = null) {
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -186,10 +177,7 @@
       const undoBtn = document.createElement('button');
       undoBtn.className = 'undo-btn';
       undoBtn.textContent = 'Undo';
-      undoBtn.addEventListener('click', () => {
-        undoCallback();
-        toast.remove();
-      });
+      undoBtn.addEventListener('click', () => { undoCallback(); toast.remove(); });
       toast.appendChild(undoBtn);
     }
     toastContainer.appendChild(toast);
@@ -204,7 +192,6 @@
       else navigator.vibrate(10);
     }
   }
-
   function playSound(type) {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -212,12 +199,12 @@
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       if (type === 'complete') {
-        osc.frequency.value = 880; osc.type = 'sine';
+        osc.frequency.value = 880;
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
       } else if (type === 'add') {
-        osc.frequency.value = 660; osc.type = 'sine';
+        osc.frequency.value = 660;
         gain.gain.setValueAtTime(0.1, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
@@ -230,7 +217,6 @@
     progressRing.style.strokeDashoffset = CIRCUMFERENCE - (percent/100) * CIRCUMFERENCE;
     progressPercent.textContent = `${Math.round(percent)}%`;
   }
-
   function updateStats() {
     const total = assignments.length;
     const completed = assignments.filter(a => a.completed).length;
@@ -241,12 +227,8 @@
     totalCountSpan.textContent = total;
     overdueCountSpan.textContent = overdue;
     streakCountEl.textContent = streak;
-
-    if (total > 0 && completed === total) {
-      launchConfetti();
-    }
+    if (total > 0 && completed === total) launchConfetti();
   }
-
   function setCurrentDate() {
     const today = new Date();
     currentDateEl.textContent = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -255,24 +237,13 @@
   }
 
   // ========== RECURRING ==========
-  function getNextRecurringDate(currentDate, recurring) {
+  function getNextRecurringDate(date, recurring) {
     switch(recurring) {
-      case 'daily': return addDays(currentDate, 1);
-      case 'weekly': return addDays(currentDate, 7);
-      case 'biweekly': return addDays(currentDate, 14);
-      case 'monthly': return addDays(currentDate, 30);
-      default: return currentDate;
-    }
-  }
-
-  function processRecurring(assignment) {
-    if (assignment.recurring === 'none' || assignment.completed) return;
-    const today = getToday();
-    if (assignment.dueDate <= today) {
-      const nextDate = getNextRecurringDate(assignment.dueDate, assignment.recurring);
-      if (nextDate > today) {
-        assignment.dueDate = nextDate;
-      }
+      case 'daily': return addDays(date, 1);
+      case 'weekly': return addDays(date, 7);
+      case 'biweekly': return addDays(date, 14);
+      case 'monthly': return addDays(date, 30);
+      default: return date;
     }
   }
 
@@ -313,7 +284,11 @@
 
   // ========== RENDER ==========
   function renderAssignments() {
-    assignments.forEach(a => processRecurring(a));
+    assignments.forEach(a => {
+      if (a.recurring !== 'none' && !a.completed && a.dueDate <= getToday()) {
+        a.dueDate = getNextRecurringDate(a.dueDate, a.recurring);
+      }
+    });
     const filtered = filterAndSort();
     assignmentsList.innerHTML = '';
     dashboardView.style.display = 'none';
@@ -349,35 +324,43 @@
         <button class="check-btn" data-id="${a.id}"><i class="fas fa-check"></i></button>
       `;
 
-      // FIXED: Check button click - stop propagation properly
-      const checkBtn = card.querySelector('.check-btn');
-      checkBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        toggleComplete(a.id);
-      });
+      assignmentsList.appendChild(card);
+    });
 
-      // FIXED: Card click only opens modal if NOT swiping and NOT clicking check button
-      card.addEventListener('click', (e) => {
-        if (isSwiping) return;
-        // Don't open modal if check button was clicked (safety check)
-        if (e.target.closest('.check-btn')) return;
-        openDetailModal(a.id);
-      });
+    // Attach events AFTER all cards are in the DOM
+    document.querySelectorAll('.assignment-card').forEach(card => {
+      const id = card.dataset.id;
+
+      // Check button - use mousedown to fire before blur/click conflicts
+      const checkBtn = card.querySelector('.check-btn');
+      if (checkBtn) {
+        checkBtn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+        checkBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleComplete(id);
+        });
+      }
+
+      // Card content click → detail modal (but not on check button)
+      const leftSide = card.querySelector('.assignment-left');
+      if (leftSide) {
+        leftSide.addEventListener('click', (e) => {
+          if (isSwiping) return;
+          openDetailModal(id);
+        });
+      }
 
       // Swipe events
       card.addEventListener('touchstart', handleSwipeStart, {passive: true});
       card.addEventListener('touchmove', handleSwipeMove, {passive: false});
       card.addEventListener('touchend', handleSwipeEnd);
       card.addEventListener('mousedown', handleSwipeStart);
-
-      assignmentsList.appendChild(card);
     });
 
-    // Global mouse events for swipe
-    window.removeEventListener('mousemove', handleSwipeMove);
-    window.removeEventListener('mouseup', handleSwipeEnd);
     window.addEventListener('mousemove', handleSwipeMove);
     window.addEventListener('mouseup', handleSwipeEnd);
 
@@ -385,56 +368,54 @@
     updateSubjectDatalist();
   }
 
-  // ========== SWIPE GESTURES ==========
+  // ========== SWIPE ==========
   function handleSwipeStart(e) {
     if (e.type === 'mousedown' && e.button !== 0) return;
+    if (e.target.closest('.check-btn')) return;
     swipingCard = e.target.closest('.assignment-card');
     if (!swipingCard) return;
     swipeStartX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
     swipeCurrentX = swipeStartX;
     isSwiping = false;
   }
-
   function handleSwipeMove(e) {
     if (!swipingCard) return;
-    const clientX = e.type.includes('mouse') ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : swipeCurrentX);
+    const clientX = e.type.includes('mouse') ? e.clientX : (e.touches?.[0]?.clientX || swipeCurrentX);
     swipeCurrentX = clientX;
     const deltaX = swipeCurrentX - swipeStartX;
     if (Math.abs(deltaX) > 5) {
       isSwiping = true;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       swipingCard.classList.add('swiping');
       swipingCard.style.transform = `translateX(${deltaX}px)`;
-      const rightIndicator = swipingCard.querySelector('.swipe-indicator.right');
-      const leftIndicator = swipingCard.querySelector('.swipe-indicator.left');
-      if (rightIndicator) rightIndicator.style.opacity = deltaX > 40 ? Math.min(deltaX/80, 1) : 0;
-      if (leftIndicator) leftIndicator.style.opacity = deltaX < -40 ? Math.min(Math.abs(deltaX)/80, 1) : 0;
+      const ri = swipingCard.querySelector('.swipe-indicator.right');
+      const li = swipingCard.querySelector('.swipe-indicator.left');
+      if (ri) ri.style.opacity = deltaX > 40 ? Math.min(deltaX/80, 1) : 0;
+      if (li) li.style.opacity = deltaX < -40 ? Math.min(Math.abs(deltaX)/80, 1) : 0;
     }
   }
-
   function handleSwipeEnd() {
     if (!swipingCard) return;
     const deltaX = swipeCurrentX - swipeStartX;
     swipingCard.classList.remove('swiping');
     swipingCard.style.transform = '';
-    const rightIndicator = swipingCard.querySelector('.swipe-indicator.right');
-    const leftIndicator = swipingCard.querySelector('.swipe-indicator.left');
-    if (rightIndicator) rightIndicator.style.opacity = 0;
-    if (leftIndicator) leftIndicator.style.opacity = 0;
-
+    const ri = swipingCard.querySelector('.swipe-indicator.right');
+    const li = swipingCard.querySelector('.swipe-indicator.left');
+    if (ri) ri.style.opacity = 0;
+    if (li) li.style.opacity = 0;
     const id = swipingCard.dataset.id;
-    if (deltaX > 80) {
+    if (deltaX > 80 && id) {
       swipingCard.classList.add('swiped-right');
-      setTimeout(() => { if (id) toggleComplete(id); }, 300);
-    } else if (deltaX < -80) {
+      setTimeout(() => toggleComplete(id), 300);
+    } else if (deltaX < -80 && id) {
       swipingCard.classList.add('swiped-left');
-      setTimeout(() => { if (id) deleteAssignment(id); }, 300);
+      setTimeout(() => deleteAssignment(id), 300);
     }
     swipingCard = null;
     isSwiping = false;
   }
 
-  // ========== DETAIL MODAL ==========
+  // ========== MODAL ==========
   function openDetailModal(id) {
     const a = assignments.find(x => x.id === id);
     if (!a) return;
@@ -447,20 +428,7 @@
     $('#modalNotes').value = a.notes || '';
     detailModal.style.display = 'flex';
   }
-
   function closeModal() { detailModal.style.display = 'none'; currentModalId = null; }
-  $('#modalClose').addEventListener('click', closeModal);
-  detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeModal(); });
-  $('#modalSave').addEventListener('click', () => {
-    if (!currentModalId) return;
-    const a = assignments.find(x => x.id === currentModalId);
-    if (a) { a.notes = $('#modalNotes').value; saveAll(); showToast('Notes saved'); haptic('success'); }
-  });
-  $('#modalDelete').addEventListener('click', () => {
-    if (!currentModalId) return;
-    deleteAssignment(currentModalId);
-    closeModal();
-  });
 
   // ========== ACTIONS ==========
   function addAssignment(subject, title, dueDate, priority, recurring) {
@@ -478,9 +446,8 @@
   function toggleComplete(id) {
     const a = assignments.find(x => x.id === id);
     if (!a) return;
-    const wasCompleted = a.completed;
     a.completed = !a.completed;
-    if (a.completed && !wasCompleted) {
+    if (a.completed) {
       const today = getToday();
       if (lastCompletedDate !== today) { lastCompletedDate = today; streak = Math.min(streak+1, 365); }
       playSound('complete'); haptic('success');
@@ -500,12 +467,16 @@
   }
 
   function clearCompleted() {
-    if (!assignments.some(a => a.completed)) return;
-    const completed = assignments.filter(a => a.completed);
+    const hasCompleted = assignments.some(a => a.completed);
+    if (!hasCompleted) {
+      showToast('No completed assignments to clear');
+      return;
+    }
+    const completedItems = assignments.filter(a => a.completed);
     assignments = assignments.filter(a => !a.completed);
     renderAssignments(); saveAll();
-    showToast(`Cleared ${completed.length} completed`, () => {
-      assignments.push(...completed);
+    showToast(`Cleared ${completedItems.length} completed`, () => {
+      assignments.push(...completedItems);
       renderAssignments(); saveAll();
     });
   }
@@ -519,7 +490,6 @@
     const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
     return `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
   }
-
   function loadSharedData() {
     const params = new URLSearchParams(window.location.search);
     const shared = params.get('shared');
@@ -530,10 +500,7 @@
         assignments = data.assignments.map((a, i) => ({
           ...a,
           id: `shared-${i}-${Date.now()}`,
-          priority: 'normal',
-          recurring: 'none',
-          notes: '',
-          completed: false
+          priority: 'normal', recurring: 'none', notes: '', completed: false
         }));
         saveAll(); renderAssignments();
         showToast('Imported shared list');
@@ -543,18 +510,10 @@
     } catch(e) {}
     return false;
   }
-
   function openShareModal() {
     $('#shareLinkInput').value = generateShareLink();
     shareModal.style.display = 'flex';
   }
-
-  $('#shareBtn').addEventListener('click', openShareModal);
-  $('#shareModalClose').addEventListener('click', () => shareModal.style.display = 'none');
-  shareModal.addEventListener('click', (e) => { if (e.target === shareModal) shareModal.style.display = 'none'; });
-  $('#copyShareLink').addEventListener('click', () => {
-    navigator.clipboard.writeText($('#shareLinkInput').value).then(() => showToast('Link copied!'));
-  });
 
   function exportData() {
     const data = { assignments, streak, exportedAt: new Date().toISOString() };
@@ -573,7 +532,6 @@
     localStorage.setItem('hwSubjectColors', JSON.stringify(subjectColorMap));
     localStorage.setItem('hwSort', sortOrder);
   }
-
   function loadAll() {
     try { const d = localStorage.getItem('hwData'); if (d) assignments = JSON.parse(d); } catch(e) {}
     streak = parseInt(localStorage.getItem('hwStreak')) || 0;
@@ -581,7 +539,6 @@
     sortOrder = localStorage.getItem('hwSort') || 'date-asc';
     try { const c = localStorage.getItem('hwSubjectColors'); if (c) subjectColorMap = JSON.parse(c); } catch(e) { subjectColorMap = {}; }
   }
-
   function updateSubjectDatalist() {
     const subjects = [...new Set(assignments.map(a => a.subject))];
     subjectSuggestions.innerHTML = subjects.map(s => `<option value="${esc(s)}">`).join('');
@@ -607,7 +564,6 @@
         <span style="font-size:0.65rem;color:var(--text-secondary)">${e.completed}/${e.count}</span>
         <div class="subject-bar-container" style="width:40%"><div class="subject-bar" style="width:${(e.count/max)*100}%;background:${getSubjectColor(e.subject)}"></div></div>
       </div>`).join('') || '<p style="font-size:0.7rem;color:var(--text-secondary)">No data</p>';
-
     const today = new Date();
     const weekStart = new Date(today); weekStart.setDate(today.getDate()-today.getDay());
     const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+6);
@@ -618,7 +574,6 @@
       <div class="week-stat-row"><span>Completed</span><span>${wCompleted}</span></div>
       <div class="week-stat-row"><span>Remaining</span><span>${weekAssignments.length-wCompleted}</span></div>
       <div class="week-stat-row"><span>Overdue</span><span style="color:var(--red)">${assignments.filter(a=>!a.completed&&isOverdue(a.dueDate)).length}</span></div>`;
-
     const days = [];
     for (let i=6;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); days.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`); }
     const data = days.map(day => {
@@ -626,8 +581,7 @@
       return { total: dayA.length, label: new Date(day+'T00:00:00').toLocaleDateString('en-US',{weekday:'short'}) };
     });
     const maxTotal = Math.max(...data.map(d=>d.total),1);
-    trendBars.innerHTML = data.map(d => `
-      <div class="trend-bar-wrapper"><div class="trend-bar" style="height:${(d.total/maxTotal)*50}px;background:${d.total>0?'var(--accent)':'var(--border)'}"></div><span class="trend-label">${d.label}</span></div>`).join('');
+    trendBars.innerHTML = data.map(d => `<div class="trend-bar-wrapper"><div class="trend-bar" style="height:${(d.total/maxTotal)*50}px;background:${d.total>0?'var(--accent)':'var(--border)'}"></div><span class="trend-label">${d.label}</span></div>`).join('');
   }
 
   // ========== FILTER ==========
@@ -648,7 +602,7 @@
     renderAssignments();
   }
 
-  // ========== EVENTS ==========
+  // ========== EVENT LISTENERS ==========
   form.addEventListener('submit', e => {
     e.preventDefault();
     const subject = subjectInput.value.trim();
@@ -667,9 +621,33 @@
   filterChips.forEach(chip => chip.addEventListener('click', () => setFilter(chip.dataset.filter)));
   searchInput.addEventListener('input', e => { searchQuery = e.target.value; renderAssignments(); });
   themeToggle.addEventListener('click', toggleTheme);
-  clearCompletedBtn.addEventListener('click', clearCompleted);
-  exportBtn.addEventListener('click', exportData);
   sortBtn.addEventListener('click', cycleSort);
+  exportBtn.addEventListener('click', exportData);
+  shareBtn.addEventListener('click', openShareModal);
+
+  // FIXED: Clear completed with direct event listener
+  clearCompletedBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    clearCompleted();
+  });
+
+  $('#modalClose').addEventListener('click', closeModal);
+  detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeModal(); });
+  $('#modalSave').addEventListener('click', () => {
+    if (!currentModalId) return;
+    const a = assignments.find(x => x.id === currentModalId);
+    if (a) { a.notes = $('#modalNotes').value; saveAll(); showToast('Notes saved'); haptic('success'); }
+  });
+  $('#modalDelete').addEventListener('click', () => {
+    if (!currentModalId) return;
+    deleteAssignment(currentModalId);
+    closeModal();
+  });
+  $('#shareModalClose').addEventListener('click', () => shareModal.style.display = 'none');
+  shareModal.addEventListener('click', (e) => { if (e.target === shareModal) shareModal.style.display = 'none'; });
+  $('#copyShareLink').addEventListener('click', () => {
+    navigator.clipboard.writeText($('#shareLinkInput').value).then(() => showToast('Link copied!'));
+  });
 
   document.addEventListener('keydown', e => {
     if ((e.metaKey||e.ctrlKey) && e.key === 'k') { e.preventDefault(); searchInput.focus(); }
@@ -685,7 +663,6 @@
       new Notification('📚 Homework due tomorrow', { body: `${dueTomorrow.length} assignment${dueTomorrow.length>1?'s':''} due tomorrow` });
     }
   }
-
   if ('Notification' in window && Notification.permission === 'default') {
     setTimeout(() => Notification.requestPermission(), 5000);
   }
@@ -701,7 +678,7 @@
     setTimeout(() => {
       if (!loadSharedData()) renderAssignments();
       generateSuggestion();
-    }, 650);
+    }, 550);
     setInterval(checkDueReminders, 3600000);
     checkDueReminders();
   }
